@@ -4,6 +4,7 @@ var status_label: Label
 var restart_button: Button
 var quit_button: Button
 var overlay: ColorRect
+var perk_status_label: Label
 
 func _ready():
 	# UI elementlerini oluştur
@@ -36,8 +37,20 @@ func setup_ui():
 	glow.color = Color(1, 0.5, 0, 0.2) # Turuncu-Sarı Glow
 	crosshair.add_child(glow)
 
+	# Perk/Durum Mesajı (Sol Üst Köşe)
+	var perk_container = MarginContainer.new()
+	perk_container.add_theme_constant_override("margin_left", 20)
+	perk_container.add_theme_constant_override("margin_top", 20)
+	add_child(perk_container)
+	
+	perk_status_label = Label.new()
+	perk_status_label.add_theme_color_override("font_color", Color(0.8, 0, 0))
+	perk_status_label.add_theme_font_size_override("font_size", 24)
+	perk_container.add_child(perk_status_label)
+
 	# Arka plan karartma
 	overlay = ColorRect.new()
+
 	overlay.color = Color(0, 0, 0, 0.8)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(overlay)
@@ -100,7 +113,16 @@ func hide_ui():
 
 
 
+func show_perk_message(msg: String, duration: float = 2.0):
+	perk_status_label.text = msg
+	var tween = create_tween()
+	tween.tween_property(perk_status_label, "modulate:a", 1.0, 0.2).from(0.0)
+	await get_tree().create_timer(duration).timeout
+	tween = create_tween()
+	tween.tween_property(perk_status_label, "modulate:a", 0.0, 0.5)
+
 func _on_game_ended(status: String):
+
 	# Kısa bir gecikme ile göster (Boss LookAt ve animasyonlar için)
 	await get_tree().create_timer(1.2).timeout
 	show_ui(status)

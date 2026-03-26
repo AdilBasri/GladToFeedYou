@@ -1,0 +1,19 @@
+[gd_scene load_steps=5 format=3]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_table"]
+albedo_color = Color(0.1, 0.08, 0.08, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_table"]
+size = Vector3(12, 0.5, 12)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_table"]
+size = Vector3(12, 0.5, 12)
+
+[node name="GomokuBoard" type="StaticBody3D"]
+
+[node name="MasaMesh" type="MeshInstance3D" parent="."]
+material_override = SubResource("StandardMaterial3D_table")
+mesh = SubResource("BoxMesh_table")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("BoxShape3D_table")

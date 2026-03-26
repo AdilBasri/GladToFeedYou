@@ -1,8 +1,8 @@
 extends Camera3D
 
 @export var hassasiyet = 0.08
-@export var limit_y = 35.0  # Yatay (Sağ/Sol)
-@export var limit_x = 25.0  # Dikey (Yukarı/Aşağı)
+@export var limit_y = 100.0  # Yatay (Sağ/Sol)
+@export var limit_x = 75.0  # Dikey (Yukarı/Aşağı)
 
 var yaw: float = 0.0
 var pitch: float = 0.0

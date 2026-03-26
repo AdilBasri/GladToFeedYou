@@ -1,0 +1,11 @@
+Model Information:
+* title:	Wmid-2b69c9 - Post medieval trade weight
+* source:	https://sketchfab.com/3d-models/wmid-2b69c9-post-medieval-trade-weight-cdc32b5c3f724da5929159a0f0de1045
+* author:	The Potteries Museum & Art Gallery (https://sketchfab.com/PotteriesMuseum)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Wmid-2b69c9 - Post medieval trade weight" (https://sketchfab.com/3d-models/wmid-2b69c9-post-medieval-trade-weight-cdc32b5c3f724da5929159a0f0de1045) by The Potteries Museum & Art Gallery (https://sketchfab.com/PotteriesMuseum) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

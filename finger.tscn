@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://blq7uyxs8ti05"]
+
+[ext_resource type="PackedScene" uid="uid://cbx3l8ss6a2cv" path="res://Assets/finger/scene.gltf" id="1_php8i"]
+
+[node name="Sketchfab_Scene" instance=ExtResource("1_php8i")]
+transform = Transform3D(0.0350152, -0.0094193015, 0.059876647, 0.059432264, -0.008246905, -0.036052667, 0.011905542, 0.06887137, 0.0038720486, 0, 0, 0)

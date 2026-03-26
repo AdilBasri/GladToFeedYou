@@ -1,0 +1,11 @@
+Model Information:
+* title:	Rope
+* source:	https://sketchfab.com/3d-models/rope-7dce7f24ef2d4f6e88e3bf5cee50e603
+* author:	lordie (https://sketchfab.com/lordie)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Rope" (https://sketchfab.com/3d-models/rope-7dce7f24ef2d4f6e88e3bf5cee50e603) by lordie (https://sketchfab.com/lordie) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
