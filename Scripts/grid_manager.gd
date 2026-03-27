@@ -15,6 +15,8 @@ signal boss_won_lookat() # Oyuncu kaybettiğinde kameraya bakması için
 @export var table_scene: PackedScene = preload("res://Scenes/GomokuBoard.tscn")
 
 var dice_scene = preload("res://Scenes/dice_physical.tscn")
+var active_rope_node: Node3D = null
+var boss_selection_body: StaticBody3D = null
 var turn_counter: int = 0
 var player_inventory: Array = []
 var boss_inventory: Array = []
@@ -195,15 +197,31 @@ func generate_grid():
 	# Grid Collision Plane (To ensure raycasts hit the EXACT surface level)
 	var static_body = StaticBody3D.new()
 	static_body.name = "GridCollision"
-	static_body.collision_layer = 1 # Default layer
+	static_body.collision_layer = 2 # Layer 2: Grid
 	var col_shape = CollisionShape3D.new()
 	var box_shape = BoxShape3D.new()
-	box_shape.size = Vector3(total_size, 0.01, total_size)
+	box_shape.size = Vector3(total_size + 1.2, 0.01, total_size + 1.2)
 	col_shape.shape = box_shape
 	static_body.add_child(col_shape)
 	add_child(static_body)
 	# Position collision at the EXACT height of cell surfaces
 	static_body.position = Vector3(0, 0.05, 0) 
+	
+	# Boss Selection Body
+	var boss = get_parent().find_child("Sitting", true, false)
+	if boss:
+		boss_selection_body = StaticBody3D.new()
+		boss_selection_body.name = "BossSelectionBody"
+		boss_selection_body.collision_layer = 8 # Layer 4: Boss
+		var b_col = CollisionShape3D.new()
+		var b_shape = CapsuleShape3D.new()
+		b_shape.radius = 0.5
+		b_shape.height = 1.8
+		b_col.shape = b_shape
+		boss_selection_body.add_child(b_col)
+		# Position relative to boss
+		boss.add_child(boss_selection_body)
+		boss_selection_body.position = Vector3(0, 1.0, 0)
 
 var raycast_timer: float = 0.0
 const RAYCAST_INTERVAL: float = 0.02 # Faster updates
@@ -230,11 +248,15 @@ func perform_raycast(is_click: bool = false):
 	var from = camera.project_ray_origin(crosshair_pos)
 	var to = from + camera.project_ray_normal(crosshair_pos) * 100.0
 	var space_state = get_world_3d().direct_space_state
-	var query = PhysicsRayQueryParameters3D.create(from, to)
+	# Collision masks: 2 (Grid), 4 (Props), 8 (Boss)
+	var mask = 2 | 4 | 8 
+	var query = PhysicsRayQueryParameters3D.create(from, to, mask)
 	var result = space_state.intersect_ray(query)
 	
 	if is_click and result:
 		var collider = result.collider
+		
+		# Propların masadaki halleri (Layer 4)
 		for type in player_item_nodes:
 			var body = player_item_nodes[type]
 			if body == collider:
@@ -251,15 +273,21 @@ func perform_raycast(is_click: bool = false):
 					else:
 						active_item = type # Select
 						node.scale = Vector3.ONE * 0.3 # Scale up as feedback
-						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SEÇİLDİ")
+						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SEÇİLDİ" + ("! (ŞEYTANI BAĞLA!)" if type == "rope" else ""))
 					return
+		
+		# Boss tıklama (Layer 8)
+		if active_item == "rope" and collider == boss_selection_body:
+			use_rope(false)
+			active_item = ""
+			return
 
 	handle_hover(result)
 	if is_click:
 		handle_click(result)
 
 func handle_hover(result):
-	if result and not is_boss_turn and not game_over:
+	if result and result.collider.collision_layer == 2 and not is_boss_turn and not game_over:
 		var coords = get_coords_from_pos(result.position)
 		if is_valid_coord(coords):
 			hover_indicator.visible = true
@@ -294,13 +322,7 @@ func set_cell_hover_state(coords: Vector2i, is_hover: bool):
 
 func handle_click(result):
 	if game_over or is_boss_turn: return
-	if player_skip_next_turn:
-		player_skip_next_turn = false
-		print("TUR PAS GECTI")
-		boss_turn()
-		return
-
-	if not result: return
+	if not result or result.collider.collision_layer != 2: return
 	var coords = get_coords_from_pos(result.position)
 	if not is_valid_coord(coords): return
 
@@ -315,7 +337,15 @@ func handle_click(result):
 		if turn_counter % 3 == 0: await trigger_gamble()
 		if check_win(coords, 1): end_game("WIN")
 		elif check_draw(): end_game("DRAW")
-		else: boss_turn()
+		else:
+			# Boss turn skip handling
+			if boss_skip_next_turn:
+				boss_skip_next_turn = false
+				if ui_layer: ui_layer.show_info_message("SIRA SENDE! (ŞEYTAN BAĞLI)")
+			else:
+				if active_rope_node:
+					_clear_rope_visual()
+				boss_turn()
 
 func execute_item_logic(coords: Vector2i):
 	match active_item:
@@ -326,8 +356,7 @@ func execute_item_logic(coords: Vector2i):
 			else:
 				if ui_layer: ui_layer.show_info_message("GEÇERSİZ: RAKİP TAŞI SEÇMELİSİN")
 		"rope":
-			use_rope()
-			active_item = ""
+			pass # Use via direct boss click only
 		"mirror":
 			if mirror_source_coord == Vector2i(-1, -1):
 				if board[coords.x][coords.y] == 1:
@@ -355,6 +384,7 @@ func use_piston(coords: Vector2i):
 		var target_pos = Vector3(coords.x * hucre_boyutu - ((grid_boyutu - 1) * hucre_boyutu / 2.0), 0.2, coords.y * hucre_boyutu - ((grid_boyutu - 1) * hucre_boyutu / 2.0)) + global_position
 		await _animate_prop_flight(node, target_pos, true)
 		node.visible = false
+		node.global_position = Vector3(0, -100, 0) # Move away to clear collision
 	
 	spawn_blood_particles(coords)
 	var piece = board_visuals.get(coords)
@@ -367,11 +397,13 @@ func use_piston(coords: Vector2i):
 	player_inventory.erase("piston")
 	boss_inventory.erase("piston")
 
-func use_rope():
+func use_rope(from_boss: bool):
+	if active_rope_node: _clear_rope_visual()
+	
 	var node = item_nodes.get("rope")
 	var target_pos: Vector3
 	
-	if is_boss_turn:
+	if from_boss:
 		player_skip_next_turn = true
 		if ui_layer: ui_layer.show_info_message("ŞEYTAN SENİ BAĞLADI!")
 		var cam = get_viewport().get_camera_3d()
@@ -383,15 +415,22 @@ func use_rope():
 		target_pos = boss.global_position + Vector3(0, 1.5, 0) if boss else global_position + Vector3(0, 2, -1)
 	
 	if node:
+		active_rope_node = node
 		await _animate_prop_flight(node, target_pos, false)
-		await get_tree().create_timer(1.5).timeout
-		var tween = create_tween()
-		tween.tween_property(node, "scale", Vector3.ZERO, 0.3)
-		await tween.finished
-		node.visible = false
+		# NOTE: Removal is now handled in turn transition logic
 	
 	player_inventory.erase("rope")
 	boss_inventory.erase("rope")
+
+func _clear_rope_visual():
+	if active_rope_node:
+		var node = active_rope_node
+		active_rope_node = null
+		var tween = create_tween()
+		tween.tween_property(node, "scale", Vector3.ZERO, 0.4)
+		await tween.finished
+		node.visible = false
+		node.global_position = Vector3(0, -100, 0) # Displacement cleanup
 
 func use_mirror(c1: Vector2i, c2: Vector2i):
 	var t1 = board[c1.x][c1.y]
@@ -551,7 +590,18 @@ func boss_turn():
 	place_piece(best_move, 2)
 	if check_win(best_move, 2): end_game("LOSS")
 	elif check_draw(): end_game("DRAW")
-	is_boss_turn = false
+	else:
+		# Player turn skip handling (Consecutive moves for Boss)
+		if player_skip_next_turn:
+			player_skip_next_turn = false
+			if ui_layer: ui_layer.show_info_message("SIRAN ATLANDI! (BAĞLISIN)")
+			await get_tree().create_timer(1.5).timeout
+			boss_turn()
+		else:
+			# Clear player rope visual if it exists
+			if active_rope_node:
+				_clear_rope_visual()
+			is_boss_turn = false
 
 func evaluate_boss_item_usage():
 	if boss_inventory.has("piston"):
@@ -559,7 +609,7 @@ func evaluate_boss_item_usage():
 		if threat != Vector2i(-1, -1):
 			await use_piston(threat)
 	elif boss_inventory.has("rope"):
-		await use_rope()
+		await use_rope(true)
 
 func _find_player_threat() -> Vector2i:
 	for x in range(grid_boyutu):
@@ -648,6 +698,7 @@ func _ensure_item_collision(item: Node3D, type: String):
 	# Add a StaticBody3D wrapper so the FBX model is clickable
 	var static_body = StaticBody3D.new()
 	static_body.name = "SelectionBody"
+	static_body.collision_layer = 4 # Layer 3: Props
 	item.add_child(static_body)
 	
 	var col_shape = CollisionShape3D.new()
@@ -711,6 +762,9 @@ func restart_game():
 	player_inventory.clear()
 	boss_inventory.clear()
 	active_item = ""
+	if active_rope_node:
+		active_rope_node.visible = false
+		active_rope_node = null
 	for type in item_nodes:
 		if item_nodes[type]:
 			item_nodes[type].visible = false
