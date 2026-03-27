@@ -242,6 +242,11 @@ func perform_raycast(is_click: bool = false):
 					var node = item_nodes[type]
 					if active_item == type:
 						active_item = "" # Deselect
+						# Reset previous source scale if deselected
+						if mirror_source_coord != Vector2i(-1, -1):
+							var piece = board_visuals.get(mirror_source_coord)
+							if piece: piece.scale = Vector3.ONE
+						mirror_source_coord = Vector2i(-1, -1)
 						node.scale = Vector3.ONE * 0.2
 					else:
 						active_item = type # Select
@@ -300,8 +305,6 @@ func handle_click(result):
 	if not is_valid_coord(coords): return
 
 	if active_item != "":
-		var item_names_tr = {"mirror": "AYNA", "piston": "PİSTON", "rope": "HALAT"}
-		if ui_layer: ui_layer.show_info_message(item_names_tr.get(active_item, active_item) + " KULLANILDI")
 		execute_item_logic(coords)
 		return
 
@@ -320,6 +323,8 @@ func execute_item_logic(coords: Vector2i):
 			if board[coords.x][coords.y] == 2:
 				use_piston(coords)
 				active_item = ""
+			else:
+				if ui_layer: ui_layer.show_info_message("GEÇERSİZ: RAKİP TAŞI SEÇMELİSİN")
 		"rope":
 			use_rope()
 			active_item = ""
@@ -327,11 +332,22 @@ func execute_item_logic(coords: Vector2i):
 			if mirror_source_coord == Vector2i(-1, -1):
 				if board[coords.x][coords.y] == 1:
 					mirror_source_coord = coords
+					if ui_layer: ui_layer.show_info_message("RAKİP TAŞINI SEÇ")
+					# Visual feedback for selected stone (Pulse UP and stay at 1.0)
+					var piece = board_visuals.get(coords)
+					if piece:
+						var tween = create_tween()
+						tween.tween_property(piece, "scale", Vector3.ONE * 1.3, 0.2)
+						tween.tween_property(piece, "scale", Vector3.ONE, 0.2)
+				else:
+					if ui_layer: ui_layer.show_info_message("GEÇERSİZ: KENDİ TAŞINI SEÇ")
 			else:
 				if board[coords.x][coords.y] == 2:
 					use_mirror(mirror_source_coord, coords)
 					active_item = ""
 					mirror_source_coord = Vector2i(-1, -1)
+				else:
+					if ui_layer: ui_layer.show_info_message("GEÇERSİZ: RAKİP TAŞINI SEÇ")
 
 func use_piston(coords: Vector2i):
 	spawn_blood_particles(coords)
@@ -340,7 +356,7 @@ func use_piston(coords: Vector2i):
 		piece.queue_free()
 		board_visuals.erase(coords)
 	board[coords.x][coords.y] = 0
-	if ui_layer: ui_layer.show_perk_message("PISTON KULLANILDI", 1.5)
+	if ui_layer: ui_layer.show_info_message("PİSTON KULLANILDI")
 	if item_nodes["piston"] and not is_boss_turn:
 
 		var tween = create_tween()
@@ -349,7 +365,7 @@ func use_piston(coords: Vector2i):
 
 func use_rope():
 	boss_skip_next_turn = true
-	if ui_layer: ui_layer.show_perk_message("BOSS BAGLANDI! KALAN TUR: 1", 2.0)
+	if ui_layer: ui_layer.show_info_message("HALAT KULLANILDI: BOSS BAĞLANDI!")
 	if item_nodes["rope"] and not is_boss_turn:
 
 		var tween = create_tween()
@@ -367,9 +383,13 @@ func use_mirror(c1: Vector2i, c2: Vector2i):
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property(v1, "global_position", p2, 0.5)
 	tween.tween_property(v2, "global_position", p1, 0.5)
+	
+	# Explicitly reset scales to 1.0 to ensure they are not "stuck small"
+	tween.tween_property(v1, "scale", Vector3.ONE, 0.1)
+	tween.tween_property(v2, "scale", Vector3.ONE, 0.1)
 	board_visuals[c1] = v2
 	board_visuals[c2] = v1
-	if ui_layer: ui_layer.show_perk_message("AYNA KULLANILDI", 1.5)
+	if ui_layer: ui_layer.show_info_message("AYNA KULLANILDI")
 	if item_nodes["mirror"] and not is_boss_turn:
 
 		var itween = create_tween()
@@ -648,5 +668,5 @@ func restart_game():
 	reset_board()
 	# Görsel taşları ve particlesları temizle
 	for child in get_children():
-		if child.name != "Masa" and child.name != "GridMultiMesh" and child.name != "HoverIndicator" and child.name != "GridBase" and (child is Node3D or child is CPUParticles3D):
+		if child.name != "Masa" and child.name != "GridMultiMesh" and child.name != "HoverIndicator" and child.name != "GridBase" and child.name != "GridCollision" and (child is Node3D or child is CPUParticles3D):
 			child.queue_free()

@@ -7960,6 +7960,10 @@ light_volumetric_fog_energy = 16.0
 spot_range = 7.0
 spot_attenuation = 0.5
 
+[node name="OmniLight3D" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7593107, -3.2782626, 4.15413)
+light_color = Color(0.15686275, 0.32941177, 0.60784316, 1)
+
 [node name="OyuncuMasa" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5019717, -3.477131, 4.408104)
 use_collision = true
