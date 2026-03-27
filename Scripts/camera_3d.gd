@@ -8,6 +8,7 @@ var yaw: float = 0.0
 var pitch: float = 0.0
 var baslangic_y: float = 0.0
 var baslangic_x: float = 0.0
+var is_locked: bool = false
 
 func _ready():
 	# Mouse yakala (GİZLE)
@@ -28,6 +29,15 @@ func _ready():
 		baslangic_x = pitch
 	
 	setup_viewmodel_rendering()
+
+func reset_rotation():
+	yaw = baslangic_y
+	pitch = baslangic_x
+	rotation_degrees.y = yaw
+	rotation_degrees.x = pitch
+	# Warp mouse to center to sync with reset yaw/pitch
+	Input.warp_mouse(get_viewport().size / 2.0)
+	is_locked = false
 
 func setup_viewmodel_rendering():
 	var el = find_child("el_tam", true, false)
@@ -82,6 +92,7 @@ func _apply_no_depth_recursive(node: Node, priority: int):
 		_apply_no_depth_recursive(child, priority)
 
 func _input(event):
+	if is_locked: return
 	if event is InputEventMouseMotion:
 		# Mouse hareketini doğrudan bakışa çevir
 		yaw -= event.relative.x * hassasiyet
@@ -92,6 +103,7 @@ func _input(event):
 		pitch = clamp(pitch, baslangic_x - limit_x, baslangic_x + limit_x)
 
 func _process(_delta):
+	if is_locked: return
 	# Nefes alma (Breathing) efekti
 	var t = Time.get_ticks_msec() * 0.001
 	var breath_yaw = sin(t * 1.1) * 0.12

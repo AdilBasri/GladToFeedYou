@@ -10,10 +10,11 @@ signal boss_won_lookat() # Oyuncu kaybettiğinde kameraya bakması için
 @export var grid_boyutu: int = 10
 @export var masa_kalinligi: float = 0.5
 
-@export var stone_scene: PackedScene = preload("res://Assets/stone/scene.gltf")
-@export var finger_scene: PackedScene = preload("res://Assets/finger/scene.gltf")
+@export var stone_scene: PackedScene = preload("res://Scenes/stone_white.tscn")
+@export var finger_scene: PackedScene = preload("res://Scenes/stone_black.tscn")
 @export var table_scene: PackedScene = preload("res://Scenes/GomokuBoard.tscn")
 
+var dice_scene = preload("res://Scenes/dice_physical.tscn")
 var turn_counter: int = 0
 var player_inventory: Array = []
 var boss_inventory: Array = []
@@ -21,6 +22,8 @@ var boss_skip_next_turn: bool = false
 var player_skip_next_turn: bool = false
 var item_nodes = {}
 var board_visuals: Dictionary = {} # (coords) -> Node3D
+var player_item_nodes: Dictionary = {} # type -> node
+var hover_indicator: MeshInstance3D
 
 var active_item: String = "" # "piston", "rope", "mirror"
 var mirror_source_coord: Vector2i = Vector2i(-1, -1)
@@ -48,33 +51,23 @@ const WEIGHT_BOSS_TWO_OPEN = 100
 
 func _ready():
 	default_material = StandardMaterial3D.new()
-	default_material.albedo_color = Color(0.2, 0.2, 0.2)
-	default_material.vertex_color_use_as_albedo = true
+	default_material.albedo_color = Color(0.15, 0.15, 0.18) # Darker, more slate-like
+	default_material.metallic = 0.5
+	default_material.roughness = 0.3
 	
 	hover_material = StandardMaterial3D.new()
-	hover_material.albedo_color = Color(0.3, 0.3, 0.3)
+	hover_material.albedo_color = Color(0.25, 0.25, 0.3)
 	hover_material.emission_enabled = true
-	hover_material.emission = Color(0.5, 0.5, 0.2)
-	hover_material.emission_energy_multiplier = 2.0
+	hover_material.emission = Color(0.0, 0.5, 1.0) # Blue glow for "gamified" feel
+	hover_material.emission_energy_multiplier = 3.0
 
 	if not Engine.is_editor_hint():
-		item_nodes["mirror"] = get_parent().find_child("mirror", true, false)
-		item_nodes["piston"] = get_parent().find_child("piston", true, false)
-		item_nodes["rope"] = get_parent().find_child("rope", true, false)
-		
-		for type in item_nodes:
-			var item = item_nodes[type]
-			if item: 
+		for type in ["mirror", "piston", "rope"]:
+			var item = get_parent().find_child(type, true, false)
+			if item:
+				item_nodes[type] = item
+				_ensure_item_collision(item, type)
 				item.visible = false
-				# Raycast için static body ekleyelim eğer yoksa (Basit kutu collider)
-				if item.get_child_count() > 0:
-					var sb = StaticBody3D.new()
-					var col = CollisionShape3D.new()
-					var shape = BoxShape3D.new()
-					shape.size = Vector3(1, 1, 1) # Yaklaşık boyut
-					col.shape = shape
-					sb.add_child(col)
-					item.add_child(sb)
 
 		temizle()
 		generate_table()
@@ -87,6 +80,23 @@ func _ready():
 		ui_layer = CanvasLayer.new()
 		ui_layer.set_script(load("res://Scripts/game_ui.gd"))
 		add_child(ui_layer)
+		
+		# Hover Indicator setup
+		hover_indicator = MeshInstance3D.new()
+		var ind_mesh = CylinderMesh.new()
+		ind_mesh.top_radius = hucre_boyutu * 0.4
+		ind_mesh.bottom_radius = hucre_boyutu * 0.4
+		ind_mesh.height = 0.01
+		hover_indicator.mesh = ind_mesh
+		var ind_mat = StandardMaterial3D.new()
+		ind_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		ind_mat.albedo_color = Color(1, 1, 1, 0.3)
+		ind_mat.emission_enabled = true
+		ind_mat.emission = Color(1, 1, 1)
+		ind_mat.emission_energy_multiplier = 2.0
+		hover_indicator.material_override = ind_mat
+		hover_indicator.name = "HoverIndicator"
+		add_child(hover_indicator)
 
 
 func setup_boss_animation():
@@ -98,11 +108,14 @@ func setup_boss_animation():
 		
 		var anim_player = sitting.find_child("AnimationPlayer", true, false)
 		if anim_player and anim_player is AnimationPlayer:
-			var anim_name = "mixamo.com"
-			if anim_player.has_animation(anim_name):
-				var anim = anim_player.get_animation(anim_name)
-				anim.loop_mode = Animation.LOOP_LINEAR
-				anim_player.play(anim_name)
+			var anim_names = ["mixamo.com", "mixamo_com"]
+			for n in anim_names:
+				if anim_player.has_animation(n):
+					var anim = anim_player.get_animation(n)
+					anim.loop_mode = Animation.LOOP_LINEAR
+					if not anim_player.is_playing() or anim_player.current_animation != n:
+						anim_player.play(n)
+					break
 
 func reset_board():
 	board.clear()
@@ -120,7 +133,7 @@ func set_olustur(_val):
 
 func temizle():
 	for child in get_children(): 
-		if child is MultiMeshInstance3D or child.name == "GridMultiMesh" or child.name == "VisualTable":
+		if child is MultiMeshInstance3D or child.name == "GridMultiMesh" or child.name == "VisualTable" or child.name == "GridBase" or child.name == "GridCollision":
 			child.free()
 	multimesh_instance = null
 
@@ -138,30 +151,62 @@ func generate_table():
 		t.owner = get_tree().edited_scene_root
 
 func generate_grid():
+	# Grid Base (A unified "board" surface under the cells)
+	var base_mesh = MeshInstance3D.new()
+	var base_box = BoxMesh.new()
+	var total_size = grid_boyutu * hucre_boyutu
+	base_box.size = Vector3(total_size, 0.05, total_size)
+	base_mesh.mesh = base_box
+	var base_mat = StandardMaterial3D.new()
+	base_mat.albedo_color = Color(0.05, 0.05, 0.07)
+	base_mat.metallic = 0.8
+	base_mat.roughness = 0.2
+	base_mesh.material_override = base_mat
+	base_mesh.name = "GridBase"
+	add_child(base_mesh)
+
+	# Grid Cells (The interactive squares)
 	multimesh_instance = MultiMeshInstance3D.new()
 	multimesh_instance.multimesh = MultiMesh.new()
 	multimesh_instance.multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh_instance.multimesh.use_colors = true
 	multimesh_instance.multimesh.instance_count = grid_boyutu * grid_boyutu
-	var mesh = PlaneMesh.new()
-	mesh.size = Vector2(hucre_boyutu * 0.9, hucre_boyutu * 0.9)
-	multimesh_instance.multimesh.mesh = mesh
+	
+	var cell_mesh = BoxMesh.new() # Use BoxMesh for "weight"
+	cell_mesh.size = Vector3(hucre_boyutu * 0.95, 0.02, hucre_boyutu * 0.95) # Smaller gaps
+	multimesh_instance.multimesh.mesh = cell_mesh
 	multimesh_instance.material_override = default_material
 	multimesh_instance.name = "GridMultiMesh"
+	
 	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
 	for x in range(grid_boyutu):
 		for z in range(grid_boyutu):
 			var idx = x * grid_boyutu + z
 			var t = Transform3D()
-			t.origin = Vector3(x * hucre_boyutu - offset, 0.02, z * hucre_boyutu - offset)
+			t.origin = Vector3(x * hucre_boyutu - offset, 0.04, z * hucre_boyutu - offset)
 			multimesh_instance.multimesh.set_instance_transform(idx, t)
 			multimesh_instance.multimesh.set_instance_color(idx, Color(1, 1, 1, 1))
 	add_child(multimesh_instance)
+	
 	if Engine.is_editor_hint() and get_tree().edited_scene_root:
+		base_mesh.owner = get_tree().edited_scene_root
 		multimesh_instance.owner = get_tree().edited_scene_root
+		
+	# Grid Collision Plane (To ensure raycasts hit the EXACT surface level)
+	var static_body = StaticBody3D.new()
+	static_body.name = "GridCollision"
+	static_body.collision_layer = 1 # Default layer
+	var col_shape = CollisionShape3D.new()
+	var box_shape = BoxShape3D.new()
+	box_shape.size = Vector3(total_size, 0.01, total_size)
+	col_shape.shape = box_shape
+	static_body.add_child(col_shape)
+	add_child(static_body)
+	# Position collision at the EXACT height of cell surfaces
+	static_body.position = Vector3(0, 0.05, 0) 
 
 var raycast_timer: float = 0.0
-const RAYCAST_INTERVAL: float = 0.05
+const RAYCAST_INTERVAL: float = 0.02 # Faster updates
 
 func _process(delta):
 	if Engine.is_editor_hint(): return
@@ -179,8 +224,8 @@ func perform_raycast(is_click: bool = false):
 	var camera = get_viewport().get_camera_3d()
 	if not camera: return
 	
-	var crosshair_pos = get_viewport().get_visible_rect().size / 2.0
-	crosshair_pos.y -= 40
+	var crosshair_pos = get_viewport().size / 2.0
+	# All offsets removed to ensure perfect center-to-center alignment
 	
 	var from = camera.project_ray_origin(crosshair_pos)
 	var to = from + camera.project_ray_normal(crosshair_pos) * 100.0
@@ -190,12 +235,18 @@ func perform_raycast(is_click: bool = false):
 	
 	if is_click and result:
 		var collider = result.collider
-		for type in item_nodes:
-			var node = item_nodes[type]
-			if node and (node == collider or node.is_ancestor_of(collider)):
+		for type in player_item_nodes:
+			var body = player_item_nodes[type]
+			if body == collider:
 				if player_inventory.has(type):
-					active_item = type
-					print("ESYA AKTIF: ", type)
+					var node = item_nodes[type]
+					if active_item == type:
+						active_item = "" # Deselect
+						node.scale = Vector3.ONE * 0.2
+					else:
+						active_item = type # Select
+						node.scale = Vector3.ONE * 0.3 # Scale up as feedback
+						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SEÇİLDİ")
 					return
 
 	handle_hover(result)
@@ -203,6 +254,24 @@ func perform_raycast(is_click: bool = false):
 		handle_click(result)
 
 func handle_hover(result):
+	if result and not is_boss_turn and not game_over:
+		var coords = get_coords_from_pos(result.position)
+		if is_valid_coord(coords):
+			hover_indicator.visible = true
+			var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
+			hover_indicator.global_position = Vector3(coords.x * hucre_boyutu - offset, 0.06, coords.y * hucre_boyutu - offset) + global_position
+			
+			if board[coords.x][coords.y] == 0:
+				hover_indicator.material_override.albedo_color = Color(0, 1, 0, 0.4) # Green for valid
+				hover_indicator.material_override.emission = Color(0, 1, 0)
+			else:
+				hover_indicator.material_override.albedo_color = Color(1, 0, 0, 0.4) # Red for invalid
+				hover_indicator.material_override.emission = Color(1, 0, 0)
+		else:
+			hover_indicator.visible = false
+	else:
+		hover_indicator.visible = false
+
 	var current_hover = Vector2i(-1, -1)
 	if result: current_hover = get_coords_from_pos(result.position)
 	if current_hover != last_hovered:
@@ -231,6 +300,8 @@ func handle_click(result):
 	if not is_valid_coord(coords): return
 
 	if active_item != "":
+		var item_names_tr = {"mirror": "AYNA", "piston": "PİSTON", "rope": "HALAT"}
+		if ui_layer: ui_layer.show_info_message(item_names_tr.get(active_item, active_item) + " KULLANILDI")
 		execute_item_logic(coords)
 		return
 
@@ -320,30 +391,70 @@ func spawn_blood_particles(coords: Vector2i):
 	get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
 
 func trigger_gamble():
+	if ui_layer: ui_layer.show_info_message("ZAR ATILDI...")
+	
+	# Fiziksel zarları fırlat
+	var dice_nodes = []
+	for i in range(2):
+		var d = dice_scene.instantiate()
+		get_parent().add_child(d)
+		# Gridin biraz üstünden fırlat
+		d.global_position = global_position + Vector3(randf_range(-0.5, 0.5), 3.0, randf_range(-0.5, 0.5))
+		# Rastgele dönme ve hız ver
+		d.apply_impulse(Vector3(randf_range(-1, 1), -2, randf_range(-1, 1)))
+		d.apply_torque_impulse(Vector3(randf_range(-5, 5), randf_range(-5, 5), randf_range(-5, 5)))
+		dice_nodes.append(d)
+	
+	# Zarların düşmesini bekle
+	await get_tree().create_timer(2.5).timeout
+	
 	var total = (randi() % 6 + 1) + (randi() % 6 + 1)
-	if ui_layer: ui_layer.show_perk_message("ZAR ATILDI: " + str(total), 1.5)
-	if total < 7: give_random_item("player")
-
-	elif total > 7: give_random_item("boss")
-	else: await trigger_gamble()
+	if ui_layer: ui_layer.show_info_message("Zar " + str(total) + " geldi!")
+	await get_tree().create_timer(1.0).timeout
+	
+	if total < 7: 
+		if ui_layer: ui_layer.show_info_message("Şans senden yana!")
+		give_random_item("player")
+	elif total > 7: 
+		if ui_layer: ui_layer.show_info_message("Şans şeytandan yana!")
+		give_random_item("boss")
+	else: 
+		# Beraberlik durumunda tekrarla
+		for d in dice_nodes: d.queue_free()
+		await trigger_gamble()
+		return
+	
+	# Zarları temizle (Yavaşça yok et)
+	for d in dice_nodes:
+		var tween = create_tween()
+		tween.tween_property(d, "scale", Vector3.ZERO, 0.5)
+		tween.finished.connect(d.queue_free)
+	
+	# Karakter animasyonundan kalan zarları gizle (Eski kod desteği)
+	var char_dice = get_parent().find_child("dice", true, false)
+	if not char_dice: char_dice = get_parent().find_child("zar", true, false)
+	if char_dice: char_dice.visible = false
 
 func give_random_item(target: String):
 	var type = ["mirror", "piston", "rope"][randi() % 3]
+	var item_names_tr = {"mirror": "AYNA", "piston": "PİSTON", "rope": "HALAT"}
+	
 	if target == "player":
 		player_inventory.append(type)
-		if item_nodes.has(type) and item_nodes[type]:
-			var camera = get_viewport().get_camera_3d()
-			item_nodes[type].visible = true
-			var tween = create_tween()
-			
-			# Kameraya göre sağ tarafa konumlandır (HUD efekti)
-			var target_pos = camera.global_position + camera.global_transform.basis.z * -0.8
-			target_pos += camera.global_transform.basis.x * 0.4 # Sağ
-			target_pos += camera.global_transform.basis.y * -0.3 # Alt
-			
-			item_nodes[type].global_position = camera.global_position
-			tween.tween_property(item_nodes[type], "global_position", target_pos, 0.5)
-			tween.tween_property(item_nodes[type], "scale", Vector3.ONE * 0.4, 0.4).from(Vector3(0.001, 0.001, 0.001))
+		if ui_layer: ui_layer.show_info_message(item_names_tr[type] + " VERİLDİ")
+		
+		var node = item_nodes.get(type)
+		if node:
+			node.visible = true
+			var masa = get_parent().find_child("OyuncuMasa", true, false)
+			if masa:
+				var slot_idx = player_inventory.size() - 1
+				var slot_pos = Vector3(-0.6 + slot_idx * 0.6, 0.7, 0.2) # Local to masa
+				var global_slot = masa.to_global(slot_pos)
+				
+				var tween = create_tween().set_parallel(true)
+				tween.tween_property(node, "global_position", global_slot, 0.6)
+				tween.tween_property(node, "scale", Vector3.ONE * 0.2, 0.6)
 	else:
 		boss_inventory.append(type)
 
@@ -401,14 +512,9 @@ func place_piece(coords: Vector2i, type: int):
 	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
 	
 	if type == 1: # Stone (Oyuncu)
-		piece.scale = Vector3(hucre_boyutu * 1.5, hucre_boyutu * 1.5, hucre_boyutu * 1.5)
-		piece.position = Vector3(coords.x * hucre_boyutu - offset, 0.1, coords.y * hucre_boyutu - offset)
-	else: # Finger (Boss)
-		piece.scale = Vector3(hucre_boyutu * 0.1, hucre_boyutu * 0.1, hucre_boyutu * 0.1)
 		piece.position = Vector3(coords.x * hucre_boyutu - offset, 0.05, coords.y * hucre_boyutu - offset)
-		# Parmağı dik ve görünür yapalım
-		piece.rotation_degrees.x = 0
-		piece.rotation_degrees.y = 180
+	else: # Finger (Boss) - Now using black stone
+		piece.position = Vector3(coords.x * hucre_boyutu - offset, 0.05, coords.y * hucre_boyutu - offset)
 		
 	add_child(piece)
 	board_visuals[coords] = piece
@@ -467,6 +573,22 @@ func _evaluate_cell(c: Vector2i) -> float:
 	score += (5.0 - Vector2(c.x, c.y).distance_to(Vector2(center, center))) * 2.0
 	return score
 
+func _ensure_item_collision(item: Node3D, type: String):
+	# Add a StaticBody3D wrapper so the FBX model is clickable
+	var static_body = StaticBody3D.new()
+	static_body.name = "SelectionBody"
+	item.add_child(static_body)
+	
+	var col_shape = CollisionShape3D.new()
+	var box = BoxShape3D.new()
+	# Props need a decent sized clickable area
+	box.size = Vector3(2.5, 2.5, 2.5) 
+	col_shape.shape = box
+	static_body.add_child(col_shape)
+	
+	# Keep a reference to the static body so we can compare it in raycast
+	player_item_nodes[type] = static_body
+
 func _score_direction(c: Vector2i, dir: Vector2i, p: int) -> float:
 	var count = 1
 	var open_ends = 0
@@ -499,6 +621,10 @@ func is_valid_coord(c: Vector2i) -> bool:
 
 func end_game(status: String):
 	game_over = true
+	var camera = get_viewport().get_camera_3d()
+	if camera and camera.has_method("set"):
+		camera.set("is_locked", true)
+		
 	if status == "LOSS":
 		boss_won_lookat.emit()
 		await get_tree().create_timer(1.0).timeout
@@ -506,13 +632,21 @@ func end_game(status: String):
 
 func restart_game():
 	game_over = false
+	var camera = get_viewport().get_camera_3d()
+	if camera and camera.has_method("reset_rotation"):
+		camera.reset_rotation()
 	is_boss_turn = false
 	turn_counter = 0
 	player_inventory.clear()
 	boss_inventory.clear()
+	active_item = ""
+	for type in item_nodes:
+		if item_nodes[type]:
+			item_nodes[type].visible = false
+			item_nodes[type].scale = Vector3.ONE * 0.2
 	board_visuals.clear()
 	reset_board()
 	# Görsel taşları ve particlesları temizle
 	for child in get_children():
-		if child.name != "Masa" and child.name != "GridMultiMesh" and (child is Node3D or child is CPUParticles3D):
+		if child.name != "Masa" and child.name != "GridMultiMesh" and child.name != "HoverIndicator" and child.name != "GridBase" and (child is Node3D or child is CPUParticles3D):
 			child.queue_free()
