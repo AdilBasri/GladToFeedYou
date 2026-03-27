@@ -350,6 +350,12 @@ func execute_item_logic(coords: Vector2i):
 					if ui_layer: ui_layer.show_info_message("GEÇERSİZ: RAKİP TAŞINI SEÇ")
 
 func use_piston(coords: Vector2i):
+	var node = item_nodes.get("piston")
+	if node:
+		var target_pos = Vector3(coords.x * hucre_boyutu - ((grid_boyutu - 1) * hucre_boyutu / 2.0), 0.2, coords.y * hucre_boyutu - ((grid_boyutu - 1) * hucre_boyutu / 2.0)) + global_position
+		await _animate_prop_flight(node, target_pos, true)
+		node.visible = false
+	
 	spawn_blood_particles(coords)
 	var piece = board_visuals.get(coords)
 	if piece:
@@ -357,20 +363,35 @@ func use_piston(coords: Vector2i):
 		board_visuals.erase(coords)
 	board[coords.x][coords.y] = 0
 	if ui_layer: ui_layer.show_info_message("PİSTON KULLANILDI")
-	if item_nodes["piston"] and not is_boss_turn:
-
-		var tween = create_tween()
-		tween.tween_property(item_nodes["piston"], "scale", Vector3.ZERO, 0.3)
-		player_inventory.erase("piston")
+	
+	player_inventory.erase("piston")
+	boss_inventory.erase("piston")
 
 func use_rope():
-	boss_skip_next_turn = true
-	if ui_layer: ui_layer.show_info_message("HALAT KULLANILDI: BOSS BAĞLANDI!")
-	if item_nodes["rope"] and not is_boss_turn:
-
+	var node = item_nodes.get("rope")
+	var target_pos: Vector3
+	
+	if is_boss_turn:
+		player_skip_next_turn = true
+		if ui_layer: ui_layer.show_info_message("ŞEYTAN SENİ BAĞLADI!")
+		var cam = get_viewport().get_camera_3d()
+		target_pos = cam.global_position + cam.global_transform.basis.z * -0.5
+	else:
+		boss_skip_next_turn = true
+		if ui_layer: ui_layer.show_info_message("ŞEYTANI BAĞLADIN!")
+		var boss = get_parent().find_child("Sitting", true, false)
+		target_pos = boss.global_position + Vector3(0, 1.5, 0) if boss else global_position + Vector3(0, 2, -1)
+	
+	if node:
+		await _animate_prop_flight(node, target_pos, false)
+		await get_tree().create_timer(1.5).timeout
 		var tween = create_tween()
-		tween.tween_property(item_nodes["rope"], "scale", Vector3.ZERO, 0.3)
-		player_inventory.erase("rope")
+		tween.tween_property(node, "scale", Vector3.ZERO, 0.3)
+		await tween.finished
+		node.visible = false
+	
+	player_inventory.erase("rope")
+	boss_inventory.erase("rope")
 
 func use_mirror(c1: Vector2i, c2: Vector2i):
 	var t1 = board[c1.x][c1.y]
@@ -434,9 +455,11 @@ func trigger_gamble():
 	
 	if total < 7: 
 		if ui_layer: ui_layer.show_info_message("Şans senden yana!")
+		await get_tree().create_timer(1.0).timeout
 		give_random_item("player")
 	elif total > 7: 
 		if ui_layer: ui_layer.show_info_message("Şans şeytandan yana!")
+		await get_tree().create_timer(1.0).timeout
 		give_random_item("boss")
 	else: 
 		# Beraberlik durumunda tekrarla
@@ -445,6 +468,7 @@ func trigger_gamble():
 		return
 	
 	# Zarları temizle (Yavaşça yok et)
+	await get_tree().create_timer(1.5).timeout
 	for d in dice_nodes:
 		var tween = create_tween()
 		tween.tween_property(d, "scale", Vector3.ZERO, 0.5)
@@ -469,14 +493,43 @@ func give_random_item(target: String):
 			var masa = get_parent().find_child("OyuncuMasa", true, false)
 			if masa:
 				var slot_idx = player_inventory.size() - 1
-				var slot_pos = Vector3(-0.6 + slot_idx * 0.6, 0.7, 0.2) # Local to masa
+				var slot_pos = Vector3(-0.6 + slot_idx * 0.6, 0.7, 0.2)
 				var global_slot = masa.to_global(slot_pos)
-				
-				var tween = create_tween().set_parallel(true)
-				tween.tween_property(node, "global_position", global_slot, 0.6)
-				tween.tween_property(node, "scale", Vector3.ONE * 0.2, 0.6)
+				_animate_to_table(node, global_slot)
 	else:
 		boss_inventory.append(type)
+		if ui_layer: ui_layer.show_info_message("ŞEYTANA " + item_names_tr[type] + " VERİLDİ")
+		var node = item_nodes.get(type)
+		if node:
+			node.visible = true
+			var masa = get_parent().find_child("BossMasa", true, false)
+			if masa:
+				var slot_idx = boss_inventory.size() # 1-based for markers
+				var marker = masa.find_child("prop" + str(slot_idx), true, false)
+				var target_pos = marker.global_position if marker else masa.to_global(Vector3(0.6 - (slot_idx-1) * 0.6, 0.7, 0.2))
+				_animate_to_table(node, target_pos)
+
+func _animate_to_table(node, target_pos):
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(node, "global_position", target_pos, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	tween.tween_property(node, "scale", Vector3.ONE * 0.2, 1.2)
+
+func _animate_prop_flight(node, target_pos, slam: bool):
+	var tween = create_tween()
+	var mid_pos = (node.global_position + target_pos) / 2.0 + Vector3(0, 3.5, 0)
+	
+	# Arched flight
+	tween.tween_property(node, "global_position", mid_pos, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.parallel().tween_property(node, "rotation_degrees:y", node.rotation_degrees.y + 720, 0.8) # Double spin
+	tween.tween_property(node, "global_position", target_pos + (Vector3(0, 1.2, 0) if slam else Vector3.ZERO), 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	if slam:
+		# Piston slam animation
+		tween.tween_property(node, "global_position", target_pos, 0.15).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_IN)
+		tween.tween_property(node, "scale", Vector3(0.25, 0.1, 0.25), 0.1) # Harder squeeze
+		tween.tween_property(node, "scale", Vector3(0.2, 0.2, 0.2), 0.2) # Restore
+	
+	await tween.finished
 
 func boss_turn():
 	if boss_skip_next_turn:
@@ -484,7 +537,7 @@ func boss_turn():
 		return
 	is_boss_turn = true
 	if boss_inventory.size() > 0:
-		evaluate_boss_item_usage()
+		await evaluate_boss_item_usage()
 		await get_tree().create_timer(1.0).timeout
 	await get_tree().create_timer(1.2).timeout
 	if game_over: return
@@ -504,11 +557,9 @@ func evaluate_boss_item_usage():
 	if boss_inventory.has("piston"):
 		var threat = _find_player_threat()
 		if threat != Vector2i(-1, -1):
-			use_piston(threat)
-			boss_inventory.erase("piston")
+			await use_piston(threat)
 	elif boss_inventory.has("rope"):
-		player_skip_next_turn = true
-		boss_inventory.erase("rope")
+		await use_rope()
 
 func _find_player_threat() -> Vector2i:
 	for x in range(grid_boyutu):
