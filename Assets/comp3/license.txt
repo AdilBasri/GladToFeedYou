@@ -1,0 +1,11 @@
+Model Information:
+* title:	Tandy Radioshack-80 Model III
+* source:	https://sketchfab.com/3d-models/tandy-radioshack-80-model-iii-beb22bad8f0c44ada24e50a586ba40ca
+* author:	brenden.hobbss (https://sketchfab.com/brenden.hobbss)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Tandy Radioshack-80 Model III" (https://sketchfab.com/3d-models/tandy-radioshack-80-model-iii-beb22bad8f0c44ada24e50a586ba40ca) by brenden.hobbss (https://sketchfab.com/brenden.hobbss) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

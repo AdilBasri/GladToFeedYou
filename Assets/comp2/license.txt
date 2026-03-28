@@ -1,0 +1,11 @@
+Model Information:
+* title:	Colin The Computer (Dhmis)
+* source:	https://sketchfab.com/3d-models/colin-the-computer-dhmis-2199ca72d1554983ada650e79f781c42
+* author:	Lilpiggy (https://sketchfab.com/Lilpiggy44321)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Colin The Computer (Dhmis)" (https://sketchfab.com/3d-models/colin-the-computer-dhmis-2199ca72d1554983ada650e79f781c42) by Lilpiggy (https://sketchfab.com/Lilpiggy44321) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

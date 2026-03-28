@@ -1,4 +1,4 @@
-[gd_scene load_steps=27 format=3 uid="uid://b6rpy1dv6qa2k"]
+[gd_scene load_steps=31 format=3 uid="uid://b6rpy1dv6qa2k"]
 
 [ext_resource type="PackedScene" uid="uid://dr3me4koijp7l" path="res://Assets/throne_of_rock/scene.gltf" id="1_fkhyb"]
 [ext_resource type="PackedScene" uid="uid://bfss40nximqnm" path="res://Assets/Sitting.fbx" id="2_ln6b3"]
@@ -10,6 +10,9 @@
 [ext_resource type="PackedScene" uid="uid://b10waitm5uay1" path="res://Assets/mirror/scene.gltf" id="8_1oesn"]
 [ext_resource type="PackedScene" uid="uid://dq1b1ldv605w7" path="res://Assets/piston/scene.gltf" id="9_t82ed"]
 [ext_resource type="PackedScene" uid="uid://djov28rgbtmxa" path="res://Assets/rope/scene.gltf" id="10_6weqo"]
+[ext_resource type="Shader" uid="uid://cupjtsglvt6bt" path="res://Scenes/Shader.gdshader" id="11_t82ed"]
+[ext_resource type="PackedScene" uid="uid://c2csarj3ajjby" path="res://Assets/comp/scene.gltf" id="12_d0u7b"]
+[ext_resource type="PackedScene" uid="uid://bbh4rnitmfx57" path="res://Assets/comp3/scene.gltf" id="13_3dc5f"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0og0i"]
 albedo_color = Color(0, 0, 0, 1)
@@ -7385,6 +7388,13 @@ volumetric_fog_length = 32.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_3klrs"]
 
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_6weqo"]
+shader = ExtResource("11_t82ed")
+shader_parameter/resolution_scale = Vector2(320, 240)
+shader_parameter/color_depth_bits = 5.0
+shader_parameter/dither_scale = 1.0
+shader_parameter/scanline_strength = 0.15
+
 [node name="GameRoom" type="Node3D"]
 
 [node name="DısDuvar" type="CSGBox3D" parent="."]
@@ -7989,7 +7999,7 @@ transform = Transform3D(0.2, 0, 0, 0, 0.0029459994, 0.1999783, 0, -0.1999783, 0.
 visible = false
 
 [node name="BossMasa" type="CSGBox3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.494056, -3.477131, 0.76501846)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.494056, -3.477131, -0.6280819)
 use_collision = true
 collision_layer = 255
 size = Vector3(1.8896484, 1.3164063, 3.0438385)
@@ -8004,7 +8014,246 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0057526, 0.0367285)
 [node name="prop3" type="Marker3D" parent="BossMasa"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0024595, -0.8073103)
 
+[node name="Props" type="CSGBox3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.494056, -3.477131, 4.3867393)
+use_collision = true
+collision_layer = 255
+size = Vector3(1.8896484, 1.3164063, 4.8160744)
+material = SubResource("StandardMaterial3D_3klrs")
+
+[node name="PostProcessing" type="CanvasLayer" parent="."]
+
+[node name="ShaderRect" type="ColorRect" parent="PostProcessing"]
+material = SubResource("ShaderMaterial_6weqo")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="comp" parent="." instance=ExtResource("12_d0u7b")]
+transform = Transform3D(0.43412057, 0, 2.4620194, 0, 2.5, 0, -2.4620194, 0, 0.43412057, -4.230766, -2.1295543, 5.7734947)
+
+[node name="Screen001" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="47"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.644, 0.8117628)
+
+[node name="Screen002" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="48"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439782, 0.8117628)
+
+[node name="Screen004" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="50"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439779, 0.8117628)
+
+[node name="Screen005" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="51"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439775, 0.8117628)
+
+[node name="Screen006" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="52"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439774, 0.8117628)
+
+[node name="Screen016" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="62"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439759, 0.8117628)
+
+[node name="Screen018" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="64"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439755, 0.8117628)
+
+[node name="Screen020" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="66"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439751, 0.8117628)
+
+[node name="Tower-light-007" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="120"]
+transform = Transform3D(0.9627419, 0, 0, 0, -4.2082785e-08, -0.9627419, 0, 0.9627419, -4.2082785e-08, 16.088608, -3.470495, -14.4949)
+
+[node name="Tower-light-008" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="121"]
+transform = Transform3D(0.9627419, 0, 0, 0, -4.2082785e-08, -0.9627419, 0, 0.9627419, -4.2082785e-08, 15.155106, -3.470495, -14.4949)
+
+[node name="Screen022" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="122"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439748, 0.8117628)
+
+[node name="Screen024" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="124"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439743, 0.8117628)
+
+[node name="Screen026" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="126"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643974, 0.8117628)
+
+[node name="Screen028" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="128"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439735, 0.8117628)
+
+[node name="Screen030" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="130"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643973, 0.8117628)
+
+[node name="Screen033" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="133"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439723, 0.8117628)
+
+[node name="Screen034" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="134"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439718, 0.8117628)
+
+[node name="Screen037" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="137"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439713, 0.8117628)
+
+[node name="Screen038" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="138"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439707, 0.8117628)
+
+[node name="Screen041" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="141"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439703, 0.8117628)
+
+[node name="Screen042" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="142"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439697, 0.8117628)
+
+[node name="Screen045" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="145"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643969, 0.8117628)
+
+[node name="Screen048" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="148"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439681, 0.8117628)
+
+[node name="Screen049" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="149"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439675, 0.8117628)
+
+[node name="Screen052" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="152"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439668, 0.8117628)
+
+[node name="Screen053" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="153"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439661, 0.8117628)
+
+[node name="Screen056" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="156"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439654, 0.8117628)
+
+[node name="Screen057" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="157"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439646, 0.8117628)
+
+[node name="Screen060" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="160"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439638, 0.8117628)
+
+[node name="Screen061" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="161"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643963, 0.8117628)
+
+[node name="Screen062" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="162"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439625, 0.8117628)
+
+[node name="Screen067" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="167"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439606, 0.8117628)
+
+[node name="Screen068" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="168"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439596, 0.8117628)
+
+[node name="Screen069" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="169"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439592, 0.8117628)
+
+[node name="Screen070" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="170"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439586, 0.8117628)
+
+[node name="Screen075" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="175"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439563, 0.8117628)
+
+[node name="Screen076" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="176"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439551, 0.8117628)
+
+[node name="Screen077" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="177"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439545, 0.8117628)
+
+[node name="Screen082" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="182"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439517, 0.8117628)
+
+[node name="Screen083" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="183"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439502, 0.8117628)
+
+[node name="Screen084" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="184"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439494, 0.8117628)
+
+[node name="Screen085" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="185"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439486, 0.8117628)
+
+[node name="Screen090" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="190"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643945, 0.8117628)
+
+[node name="Screen091" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="191"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439431, 0.8117628)
+
+[node name="Screen092" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="192"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643942, 0.8117628)
+
+[node name="Screen097" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="197"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439375, 0.8117628)
+
+[node name="Screen098" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="198"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643935, 0.8117628)
+
+[node name="Screen099" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="199"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439335, 0.8117628)
+
+[node name="Screen100" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="200"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439321, 0.8117628)
+
+[node name="Screen105" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="205"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439258, 0.8117628)
+
+[node name="Screen106" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="206"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439222, 0.8117628)
+
+[node name="Screen107" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="207"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439203, 0.8117628)
+
+[node name="Screen112" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="212"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439114, 0.8117628)
+
+[node name="Screen113" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="213"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439062, 0.8117628)
+
+[node name="Screen114" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="214"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439034, 0.8117628)
+
+[node name="Screen115" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="215"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6439003, 0.8117628)
+
+[node name="Screen120" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="220"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6438861, 0.8117628)
+
+[node name="Screen121" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="221"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6438773, 0.8117628)
+
+[node name="Screen122" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="222"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6438724, 0.8117628)
+
+[node name="Screen123" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="223"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6438671, 0.8117628)
+
+[node name="Screen124" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="224"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6438613, 0.8117628)
+
+[node name="Screen125" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="225"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.643855, 0.8117628)
+
+[node name="Screen126" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="226"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6438481, 0.8117628)
+
+[node name="Screen135" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="235"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6437546, 0.8117628)
+
+[node name="Screen136" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="236"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6437099, 0.8117628)
+
+[node name="Screen137" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="237"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6436809, 0.8117628)
+
+[node name="Screen138" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="238"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6436454, 0.8117628)
+
+[node name="Screen139" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="239"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6436012, 0.8117628)
+
+[node name="Screen140" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="240"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6435441, 0.8117628)
+
+[node name="Screen141" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="241"]
+transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6434681, 0.8117628)
+
+[node name="comp2" parent="." instance=ExtResource("13_3dc5f")]
+transform = Transform3D(0.10260605, 0, 0.2819078, 0, 0.3, 0, -0.2819078, 0, 0.10260605, -2.89865, -3.4557724, 3.7088318)
+
+[node name="Cube" parent="comp2/Sketchfab_model/Root" index="71"]
+transform = Transform3D(0.54901, 0, 0, 0, 0.52286094, 0.16741677, 0, -0.16741677, 0.52286094, 1.12211, 4.83986, 3.12501)
+
 [editable path="Taht"]
 [editable path="Sitting"]
 [editable path="CharacterBody3D/Camera3D/el_tam"]
 [editable path="CharacterBody3D/Camera3D/mice"]
+[editable path="comp"]
+[editable path="comp2"]
