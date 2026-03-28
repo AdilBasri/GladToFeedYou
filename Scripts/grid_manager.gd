@@ -53,17 +53,27 @@ const WEIGHT_BOSS_TWO_OPEN = 100
 
 func _ready():
 	default_material = StandardMaterial3D.new()
-	default_material.albedo_color = Color(0.15, 0.15, 0.18) # Darker, more slate-like
-	default_material.metallic = 0.5
-	default_material.roughness = 0.3
+	default_material.albedo_color = Color(0.2, 0.2, 0.22) # Lighter slate
+	default_material.metallic = 0.4
+	default_material.roughness = 0.4
 	
 	hover_material = StandardMaterial3D.new()
-	hover_material.albedo_color = Color(0.25, 0.25, 0.3)
+	hover_material.albedo_color = Color(0.1, 0.1, 0.15)
 	hover_material.emission_enabled = true
-	hover_material.emission = Color(0.0, 0.5, 1.0) # Blue glow for "gamified" feel
-	hover_material.emission_energy_multiplier = 3.0
+	hover_material.emission = Color(0.0, 0.5, 0.8) # Muted Cyan
+	hover_material.emission_energy_multiplier = 1.5 # Reduced from 4.0
 
 	if not Engine.is_editor_hint():
+		# World Environment Polish
+		var world_env = get_tree().root.find_child("WorldEnvironment", true, false)
+		if world_env and world_env.environment:
+			var env = world_env.environment
+			env.tonemap_mode = 3 # ACES
+			env.glow_enabled = true
+			env.glow_bloom = 0.05 # Reduced from 0.1
+			env.glow_intensity = 0.4 # Reduced from 0.8
+			env.glow_strength = 0.8
+			env.glow_blend_mode = 1 # Screen
 		for type in ["mirror", "piston", "rope"]:
 			var item = get_parent().find_child(type, true, false)
 			if item:
@@ -206,9 +216,9 @@ func generate_grid():
 	base_box.size = Vector3(total_size, 0.05, total_size)
 	base_mesh.mesh = base_box
 	var base_mat = StandardMaterial3D.new()
-	base_mat.albedo_color = Color(0.05, 0.05, 0.07)
-	base_mat.metallic = 0.8
-	base_mat.roughness = 0.2
+	base_mat.albedo_color = Color(0.12, 0.12, 0.15) # Lighter base
+	base_mat.metallic = 0.5
+	base_mat.roughness = 0.5
 	base_mesh.material_override = base_mat
 	base_mesh.name = "GridBase"
 	add_child(base_mesh)
@@ -272,12 +282,53 @@ func generate_grid():
 var raycast_timer: float = 0.0
 const RAYCAST_INTERVAL: float = 0.02 # Faster updates
 
+func spawn_placement_vfx(coords: Vector2i, type: int):
+	# Flash effect
+	var flash = MeshInstance3D.new()
+	var flash_mesh = CylinderMesh.new()
+	flash_mesh.top_radius = hucre_boyutu * 0.5
+	flash_mesh.bottom_radius = hucre_boyutu * 0.5
+	flash_mesh.height = 0.1
+	flash.mesh = flash_mesh
+	
+	var mat = StandardMaterial3D.new()
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.albedo_color = Color(1, 1, 1, 0.8) if type == 1 else Color(1, 0, 0, 0.8)
+	mat.emission_enabled = true
+	mat.emission = Color(1, 1, 1) if type == 1 else Color(1, 0, 0)
+	mat.emission_energy_multiplier = 2.0 # Reduced from 5.0
+	flash.material_override = mat
+	
+	add_child(flash)
+	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
+	flash.position = Vector3(coords.x * hucre_boyutu - offset, 0.1, coords.y * hucre_boyutu - offset)
+	
+	var tween = create_tween().set_parallel(true)
+	tween.tween_property(flash, "scale", Vector3(1.5, 0.1, 1.5), 0.2)
+	tween.tween_property(mat, "albedo_color:a", 0.0, 0.2)
+	tween.tween_property(mat, "emission_energy_multiplier", 0.0, 0.2)
+	tween.chain().finished.connect(flash.queue_free)
+
 func _process(delta):
 	if Engine.is_editor_hint(): return
 	raycast_timer += delta
 	if raycast_timer >= RAYCAST_INTERVAL:
 		raycast_timer = 0.0
 		perform_raycast()
+	
+	# Light pulsing during boss turn
+	if is_boss_turn and not game_over:
+		animate_boss_lights(delta)
+
+func animate_boss_lights(delta):
+	var world_env = get_tree().root.find_child("WorldEnvironment", true, false)
+	if not world_env: return
+	
+	for light in world_env.get_children():
+		if light is SpotLight3D:
+			var pulse = (sin(Time.get_ticks_msec() * 0.005) + 1.0) / 2.0 # 0 to 1
+			light.light_energy = lerp(10.0, 25.0, pulse)
+			light.light_indirect_energy = lerp(2.0, 8.0, pulse)
 
 func _input(event):
 	if Engine.is_editor_hint(): return
@@ -507,14 +558,28 @@ func spawn_blood_particles(coords: Vector2i):
 	add_child(particles)
 	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
 	particles.position = Vector3(coords.x * hucre_boyutu - offset, 0.2, coords.y * hucre_boyutu - offset)
-	particles.amount = 30
+	
+	particles.amount = 40
+	particles.lifetime = 1.0
 	particles.one_shot = true
-	particles.explosiveness = 0.8
+	particles.explosiveness = 0.9
+	particles.mesh = BoxMesh.new()
+	particles.mesh.size = Vector3(0.05, 0.05, 0.05)
+	
+	particles.direction = Vector3(0, 1, 0)
+	particles.spread = 45.0
+	particles.initial_velocity_min = 2.0
+	particles.initial_velocity_max = 5.0
+	particles.gravity = Vector3(0, -9.8, 0)
+	
 	var mat = StandardMaterial3D.new()
-	mat.albedo_color = Color.RED
+	mat.albedo_color = Color(0.6, 0, 0) # Deep blood red
+	mat.metallic = 0.5
+	mat.roughness = 0.2
 	particles.material_override = mat
+	
 	particles.emitting = true
-	get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
+	get_tree().create_timer(1.2).timeout.connect(particles.queue_free)
 
 func trigger_gamble():
 	play_boss_anim("dice")
@@ -690,6 +755,27 @@ func place_piece(coords: Vector2i, type: int):
 		
 	add_child(piece)
 	board_visuals[coords] = piece
+
+	# Visibility fix for boss stones (Type 2)
+	if type == 2:
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = Color(0.15, 0.15, 0.18) # Dark grey, not pitch black
+		mat.metallic = 0.8
+		mat.roughness = 0.2
+		mat.rim_enabled = true
+		mat.rim = 1.0
+		mat.emission_enabled = true
+		mat.emission = Color(0.4, 0, 0) # Faint red glow
+		mat.emission_energy_multiplier = 0.5
+		piece.set("material_override", mat)
+
+	# Camera Shake on placement
+	var cam = get_viewport().get_camera_3d()
+	if cam and cam.has_method("apply_shake"):
+		cam.apply_shake(0.05 if type == 1 else 0.12, 0.2)
+	
+	# Placement VFX
+	spawn_placement_vfx(coords, type)
 
 func check_win(c: Vector2i, p: int) -> bool:
 	var directions = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, -1)]

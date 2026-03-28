@@ -10,6 +10,11 @@ var baslangic_y: float = 0.0
 var baslangic_x: float = 0.0
 var is_locked: bool = false
 
+# Shake Params
+var shake_intensity: float = 0.0
+var shake_duration: float = 0.0
+var shake_offset: Vector3 = Vector3.ZERO
+
 func _ready():
 	# Mouse yakala (GİZLE)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -38,6 +43,10 @@ func reset_rotation():
 	# Warp mouse to center to sync with reset yaw/pitch
 	Input.warp_mouse(get_viewport().get_visible_rect().size / 2.0)
 	is_locked = false
+
+func apply_shake(intensity: float, duration: float):
+	shake_intensity = intensity
+	shake_duration = duration
 
 func setup_viewmodel_rendering():
 	var el = find_child("el_tam", true, false)
@@ -104,12 +113,25 @@ func _input(event):
 
 func _process(_delta):
 	if is_locked: return
+	
+	# Shake logic
+	if shake_duration > 0:
+		shake_duration -= _delta
+		var current_intensity = shake_intensity * (shake_duration / shake_duration + 0.1) # Decaying
+		shake_offset = Vector3(
+			randf_range(-1, 1) * current_intensity,
+			randf_range(-1, 1) * current_intensity,
+			0
+		)
+	else:
+		shake_offset = shake_offset.lerp(Vector3.ZERO, _delta * 10.0)
+
 	# Nefes alma (Breathing) efekti
 	var t = Time.get_ticks_msec() * 0.001
 	var breath_yaw = sin(t * 1.1) * 0.12
 	var breath_pitch = cos(t * 0.8) * 0.15
 	var breath_roll = sin(t * 0.5) * 0.08
 	
-	rotation_degrees.y = yaw + breath_yaw
-	rotation_degrees.x = pitch + breath_pitch
-	rotation_degrees.z = breath_roll
+	rotation_degrees.y = yaw + breath_yaw + (shake_offset.x * 2.0)
+	rotation_degrees.x = pitch + breath_pitch + (shake_offset.y * 2.0)
+	rotation_degrees.z = breath_roll + (shake_offset.z * 5.0)
