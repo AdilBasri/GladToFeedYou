@@ -36,7 +36,7 @@ func reset_rotation():
 	rotation_degrees.y = yaw
 	rotation_degrees.x = pitch
 	# Warp mouse to center to sync with reset yaw/pitch
-	Input.warp_mouse(get_viewport().size / 2.0)
+	Input.warp_mouse(get_viewport().get_visible_rect().size / 2.0)
 	is_locked = false
 
 func setup_viewmodel_rendering():

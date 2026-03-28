@@ -110,13 +110,59 @@ func setup_boss_animation():
 		
 		var anim_player = sitting.find_child("AnimationPlayer", true, false)
 		if anim_player and anim_player is AnimationPlayer:
-			var anim_names = ["mixamo.com", "mixamo_com"]
-			for n in anim_names:
+			# Godot 4: Animasyonlar artık kütüphanelere (AnimationLibrary) ekleniyor
+			var lib = anim_player.get_animation_library("")
+			if not lib:
+				lib = AnimationLibrary.new()
+				anim_player.add_animation_library("", lib)
+			
+			# Yeni animasyonları yükle ve kütüphaneye ekle
+			var anims = {
+				"dice": "res://dice.res",
+				"lose": "res://lose.res",
+				"win": "res://win.res",
+				"use": "res://use.res"
+			}
+			
+			for a_name in anims:
+				var res_path = anims[a_name]
+				if FileAccess.file_exists(res_path):
+					var a_res = load(res_path)
+					if a_res:
+						# Kütüphaneden eski animasyonu silip yenisini ekleyelim
+						if lib.has_animation(a_name):
+							lib.remove_animation(a_name)
+						lib.add_animation(a_name, a_res)
+						
+						# Loop ayarları (Animasyon kaynağı üzerinde yapılır)
+						if a_name == "win" or a_name == "lose":
+							a_res.loop_mode = Animation.LOOP_LINEAR
+						else:
+							a_res.loop_mode = Animation.LOOP_NONE
+			
+			# Varsayılan idle animasyonu bul ve başlat
+			var idle_names = ["mixamo.com", "mixamo_com"]
+			for n in idle_names:
 				if anim_player.has_animation(n):
 					var anim = anim_player.get_animation(n)
 					anim.loop_mode = Animation.LOOP_LINEAR
 					if not anim_player.is_playing() or anim_player.current_animation != n:
 						anim_player.play(n)
+					break
+
+func play_boss_anim(anim_name: String):
+	var sitting = get_parent().find_child("Sitting", true, false)
+	if not sitting: return
+	var anim_player = sitting.find_child("AnimationPlayer", true, false)
+	if anim_player and anim_player.has_animation(anim_name):
+		anim_player.play(anim_name)
+		if anim_name == "dice" or anim_name == "use":
+			await anim_player.animation_finished
+			# Geri dön (mixamo idle animasyonu)
+			var idle_names = ["mixamo.com", "mixamo_com"]
+			for n in idle_names:
+				if anim_player.has_animation(n):
+					anim_player.play(n)
 					break
 
 func reset_board():
@@ -242,7 +288,7 @@ func perform_raycast(is_click: bool = false):
 	var camera = get_viewport().get_camera_3d()
 	if not camera: return
 	
-	var crosshair_pos = get_viewport().size / 2.0
+	var crosshair_pos = get_viewport().get_visible_rect().size / 2.0
 	# All offsets removed to ensure perfect center-to-center alignment
 	
 	var from = camera.project_ray_origin(crosshair_pos)
@@ -471,6 +517,7 @@ func spawn_blood_particles(coords: Vector2i):
 	get_tree().create_timer(1.5).timeout.connect(particles.queue_free)
 
 func trigger_gamble():
+	play_boss_anim("dice")
 	if ui_layer: ui_layer.show_info_message("ZAR ATILDI...")
 	
 	# Fiziksel zarları fırlat
@@ -607,8 +654,12 @@ func evaluate_boss_item_usage():
 	if boss_inventory.has("piston"):
 		var threat = _find_player_threat()
 		if threat != Vector2i(-1, -1):
+			play_boss_anim("use")
+			await get_tree().create_timer(0.5).timeout
 			await use_piston(threat)
 	elif boss_inventory.has("rope"):
+		play_boss_anim("use")
+		await get_tree().create_timer(0.5).timeout
 		await use_rope(true)
 
 func _find_player_threat() -> Vector2i:
@@ -748,8 +799,12 @@ func end_game(status: String):
 		camera.set("is_locked", true)
 		
 	if status == "LOSS":
+		play_boss_anim("win")
 		boss_won_lookat.emit()
 		await get_tree().create_timer(1.0).timeout
+	elif status == "WIN":
+		play_boss_anim("lose")
+		
 	game_ended.emit(status)
 
 func restart_game():
@@ -757,6 +812,17 @@ func restart_game():
 	var camera = get_viewport().get_camera_3d()
 	if camera and camera.has_method("reset_rotation"):
 		camera.reset_rotation()
+	# Idle animasyonuna dön
+	var sitting = get_parent().find_child("Sitting", true, false)
+	if sitting:
+		var anim_player = sitting.find_child("AnimationPlayer", true, false)
+		if anim_player:
+			var idle_names = ["mixamo.com", "mixamo_com"]
+			for n in idle_names:
+				if anim_player.has_animation(n):
+					anim_player.play(n)
+					break
+
 	is_boss_turn = false
 	turn_counter = 0
 	player_inventory.clear()
