@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://b6rpy1dv6qa2k"]
+[gd_scene load_steps=27 format=3 uid="uid://b6rpy1dv6qa2k"]
 
 [ext_resource type="PackedScene" uid="uid://dr3me4koijp7l" path="res://Assets/throne_of_rock/scene.gltf" id="1_fkhyb"]
 [ext_resource type="PackedScene" uid="uid://bfss40nximqnm" path="res://Assets/Sitting.fbx" id="2_ln6b3"]
@@ -10,8 +10,6 @@
 [ext_resource type="PackedScene" uid="uid://b10waitm5uay1" path="res://Assets/mirror/scene.gltf" id="8_1oesn"]
 [ext_resource type="PackedScene" uid="uid://dq1b1ldv605w7" path="res://Assets/piston/scene.gltf" id="9_t82ed"]
 [ext_resource type="PackedScene" uid="uid://djov28rgbtmxa" path="res://Assets/rope/scene.gltf" id="10_6weqo"]
-[ext_resource type="PackedScene" uid="uid://dt6uie208l2gv" path="res://Assets/stone/scene.gltf" id="11_t82ed"]
-[ext_resource type="PackedScene" uid="uid://cbx3l8ss6a2cv" path="res://Assets/finger/scene.gltf" id="13_3dc5f"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0og0i"]
 albedo_color = Color(0, 0, 0, 1)
@@ -7979,15 +7977,15 @@ size = Vector3(1.8896484, 1.3164063, 3.0438385)
 material = SubResource("StandardMaterial3D_3klrs")
 
 [node name="mirror" parent="OyuncuMasa" instance=ExtResource("8_1oesn")]
-transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -0.04082775, 0.6721926, 1.0655627)
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -0.04082775, 0.893728, 1.0655627)
 visible = false
 
 [node name="piston" parent="OyuncuMasa" instance=ExtResource("9_t82ed")]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, -0.07650995, 1.8191755, 0.13139391)
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, -0.07650995, 2.0819535, 0.13139391)
 visible = false
 
 [node name="rope" parent="OyuncuMasa" instance=ExtResource("10_6weqo")]
-transform = Transform3D(0.2, 0, 0, 0, 0.0029459994, 0.1999783, 0, -0.1999783, 0.0029459994, -0.18564224, 1.0946698, -1.1133902)
+transform = Transform3D(0.2, 0, 0, 0, 0.0029459994, 0.1999783, 0, -0.1999783, 0.0029459994, -0.18564224, 1.7003945, -1.1133902)
 visible = false
 
 [node name="BossMasa" type="CSGBox3D" parent="."]
@@ -7998,21 +7996,13 @@ size = Vector3(1.8896484, 1.3164063, 3.0438385)
 material = SubResource("StandardMaterial3D_3klrs")
 
 [node name="prop1" type="Marker3D" parent="BossMasa"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88273835, 0.80881596)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0010672, 0.80881596)
 
 [node name="prop2" type="Marker3D" parent="BossMasa"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88273835, 0.0367285)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0057526, 0.0367285)
 
 [node name="prop3" type="Marker3D" parent="BossMasa"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88273835, -0.8073103)
-
-[node name="stone" parent="." instance=ExtResource("11_t82ed")]
-transform = Transform3D(0.003, 0, 0, 0, 0.003, 0, 0, 0, 0.003, 3.8620596, -2.1133752, 2.1485703)
-visible = false
-
-[node name="finger" parent="." instance=ExtResource("13_3dc5f")]
-transform = Transform3D(0.035015207, -0.009419302, 0.059876647, 0.059432276, -0.008246906, -0.036052667, 0.011905544, 0.06887138, 0.0038720486, 3.7362745, -2.393117, 2.703331)
-visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0024595, -0.8073103)
 
 [editable path="Taht"]
 [editable path="Sitting"]

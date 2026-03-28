@@ -70,10 +70,22 @@ func _ready():
 			var env = world_env.environment
 			env.tonemap_mode = 3 # ACES
 			env.glow_enabled = true
-			env.glow_bloom = 0.05 # Reduced from 0.1
-			env.glow_intensity = 0.4 # Reduced from 0.8
+			env.glow_bloom = 0.05
+			env.glow_intensity = 0.4
 			env.glow_strength = 0.8
 			env.glow_blend_mode = 1 # Screen
+			
+			# Compatibility Mode Fixes (Disable Forward+ features)
+			env.volumetric_fog_enabled = false
+			if "ssao_enabled" in env: env.ssao_enabled = false
+			if "ssil_enabled" in env: env.ssil_enabled = false
+			if "sdfgi_enabled" in env: env.sdfgi_enabled = false
+			if "ssr_enabled" in env: env.ssr_enabled = false
+
+		# Table Collision Isolation
+		for table_name in ["OyuncuMasa", "BossMasa"]:
+			var table = get_parent().find_child(table_name, true, false)
+			if table: table.collision_layer = 1 # Keep on default layer, away from Props (4)
 		for type in ["mirror", "piston", "rope"]:
 			var item = get_parent().find_child(type, true, false)
 			if item:
@@ -641,34 +653,49 @@ func give_random_item(target: String):
 		var node = item_nodes.get(type)
 		if node:
 			node.visible = true
-			var masa = get_parent().find_child("OyuncuMasa", true, false)
-			if masa:
-				var slot_idx = player_inventory.size() - 1
-				var slot_pos = Vector3(-0.6 + slot_idx * 0.6, 0.85, 0.2) # Increased Y to 0.85
-				var global_slot = masa.to_global(slot_pos)
-				_animate_to_table(node, global_slot)
+			var slot_pos = _get_item_slot_pos("player", player_inventory.size() - 1)
+			_animate_to_table(node, slot_pos)
 	else:
 		boss_inventory.append(type)
 		if ui_layer: ui_layer.show_info_message("ŞEYTANA " + item_names_tr[type] + " VERİLDİ")
 		var node = item_nodes.get(type)
 		if node:
 			node.visible = true
-			var masa = get_parent().find_child("BossMasa", true, false)
-			if masa:
-				var slot_idx = boss_inventory.size() # 1-based for markers
-				var marker = masa.find_child("prop" + str(slot_idx), true, false)
-				var target_pos = marker.global_position if marker else masa.to_global(Vector3(0.6 - (slot_idx-1) * 0.6, 0.85, 0.2)) # Increased Y
-				_animate_to_table(node, target_pos)
+			var slot_pos = _get_item_slot_pos("boss", boss_inventory.size() - 1)
+			_animate_to_table(node, slot_pos)
 
 func _animate_to_table(node, target_pos):
 	var type = ""
 	for k in item_nodes:
 		if item_nodes[k] == node: type = k
 	
-	var target_scale = 0.08 if type == "piston" else 0.15 # Reduced scales
+	var target_scale = 0.08 if type == "piston" else 0.15
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property(node, "global_position", target_pos, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(node, "scale", Vector3.ONE * target_scale, 1.2)
+	
+	# Explicitly clear any X/Z rotations from the scene to prevent collision offset
+	tween.tween_property(node, "rotation_degrees:x", 0.0, 1.2)
+	tween.tween_property(node, "rotation_degrees:z", 0.0, 1.2)
+	
+	# Compensate selection body scale so it stays at ~1.0 in world space
+	var sb = node.find_child("SelectionBody", true, false)
+	if sb:
+		var inv_scale = 1.0 / target_scale
+		tween.tween_property(sb, "scale", Vector3.ONE * inv_scale, 1.2)
+	
+	# Add randomized yaw rotation for "solid" feeling
+	tween.tween_property(node, "rotation_degrees:y", randf_range(-25, 25), 1.2)
+
+func _get_item_slot_pos(target: String, idx: int) -> Vector3:
+	var masa_name = "OyuncuMasa" if target == "player" else "BossMasa"
+	var masa = get_parent().find_child(masa_name, true, false)
+	if not masa: return global_position + Vector3(0, 1, 0)
+	
+	# Slot spacing: 1.0 units apart for better separation
+	var x_offset = -1.0 + (idx * 1.0) if target == "player" else 1.0 - (idx * 1.0)
+	var local_pos = Vector3(x_offset, 1.2, 0.2) # Increased Y to 1.2
+	return masa.to_global(local_pos)
 
 func _animate_prop_flight(node, target_pos, slam: bool):
 	var tween = create_tween()
@@ -845,14 +872,31 @@ func _ensure_item_collision(item: Node3D, type: String):
 	
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
-	# Refined clickable area
-	box.size = Vector3(0.5, 0.5, 0.5) if type == "piston" else Vector3(0.8, 0.8, 0.8)
+	
+	# Use a static base size for the box, we will scale the StaticBody3D instead
+	var base_size = 1.0 if type == "piston" else 1.5 # Larger base size
+	box.size = Vector3.ONE * base_size
+	
 	col_shape.shape = box
 	static_body.add_child(col_shape)
-	static_body.position = Vector3(0, 0.2, 0) # Lift collision slightly
 	
-	# Keep a reference to the static body so we can compare it in raycast
+	# Set initial scale compensation based on current item scale
+	if item.scale.x > 0:
+		static_body.scale = Vector3.ONE / item.scale.x
+	
+	static_body.position = Vector3(0, 0.5, 0) # Centered
+	
+	# Force model nodes to ignore collision to avoid interference
+	_strip_collisions(item)
+	
 	player_item_nodes[type] = static_body
+
+func _strip_collisions(node: Node):
+	if node is CollisionObject3D and node.name != "SelectionBody":
+		node.collision_layer = 0
+		node.collision_mask = 0
+	for child in node.get_children():
+		_strip_collisions(child)
 
 func _score_direction(c: Vector2i, dir: Vector2i, p: int) -> float:
 	var count = 1
