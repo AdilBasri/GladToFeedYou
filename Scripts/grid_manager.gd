@@ -644,7 +644,7 @@ func give_random_item(target: String):
 			var masa = get_parent().find_child("OyuncuMasa", true, false)
 			if masa:
 				var slot_idx = player_inventory.size() - 1
-				var slot_pos = Vector3(-0.6 + slot_idx * 0.6, 0.7, 0.2)
+				var slot_pos = Vector3(-0.6 + slot_idx * 0.6, 0.85, 0.2) # Increased Y to 0.85
 				var global_slot = masa.to_global(slot_pos)
 				_animate_to_table(node, global_slot)
 	else:
@@ -657,13 +657,18 @@ func give_random_item(target: String):
 			if masa:
 				var slot_idx = boss_inventory.size() # 1-based for markers
 				var marker = masa.find_child("prop" + str(slot_idx), true, false)
-				var target_pos = marker.global_position if marker else masa.to_global(Vector3(0.6 - (slot_idx-1) * 0.6, 0.7, 0.2))
+				var target_pos = marker.global_position if marker else masa.to_global(Vector3(0.6 - (slot_idx-1) * 0.6, 0.85, 0.2)) # Increased Y
 				_animate_to_table(node, target_pos)
 
 func _animate_to_table(node, target_pos):
+	var type = ""
+	for k in item_nodes:
+		if item_nodes[k] == node: type = k
+	
+	var target_scale = 0.08 if type == "piston" else 0.15 # Reduced scales
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property(node, "global_position", target_pos, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	tween.tween_property(node, "scale", Vector3.ONE * 0.2, 1.2)
+	tween.tween_property(node, "scale", Vector3.ONE * target_scale, 1.2)
 
 func _animate_prop_flight(node, target_pos, slam: bool):
 	var tween = create_tween()
@@ -672,7 +677,7 @@ func _animate_prop_flight(node, target_pos, slam: bool):
 	# Arched flight
 	tween.tween_property(node, "global_position", mid_pos, 0.8).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.parallel().tween_property(node, "rotation_degrees:y", node.rotation_degrees.y + 720, 0.8) # Double spin
-	tween.tween_property(node, "global_position", target_pos + (Vector3(0, 1.2, 0) if slam else Vector3.ZERO), 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(node, "global_position", target_pos + (Vector3(0, 0.6, 0) if slam else Vector3.ZERO), 0.6).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	
 	if slam:
 		# Piston slam animation
@@ -840,10 +845,11 @@ func _ensure_item_collision(item: Node3D, type: String):
 	
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
-	# Props need a decent sized clickable area
-	box.size = Vector3(2.5, 2.5, 2.5) 
+	# Refined clickable area
+	box.size = Vector3(0.5, 0.5, 0.5) if type == "piston" else Vector3(0.8, 0.8, 0.8)
 	col_shape.shape = box
 	static_body.add_child(col_shape)
+	static_body.position = Vector3(0, 0.2, 0) # Lift collision slightly
 	
 	# Keep a reference to the static body so we can compare it in raycast
 	player_item_nodes[type] = static_body
