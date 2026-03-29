@@ -4,11 +4,11 @@ extends Node3D
 signal player_moved(coords: Vector2i)
 signal boss_decided(coords: Vector2i)
 signal game_ended(status: String) # "WIN", "LOSS", "DRAW"
-signal boss_won_lookat() # Oyuncu kaybettiğinde kameraya bakması için
+signal boss_won_lookat() # For looking at the camera when the player loses
 
-@export var hucre_boyutu: float = 1.1
-@export var grid_boyutu: int = 10
-@export var masa_kalinligi: float = 0.5
+@export var cell_size: float = 1.1
+@export var grid_size: int = 10
+@export var table_thickness: float = 0.5
 
 @export var stone_scene: PackedScene = preload("res://Scenes/stone_white.tscn")
 @export var finger_scene: PackedScene = preload("res://Scenes/stone_black.tscn")
@@ -32,7 +32,7 @@ var mirror_source_coord: Vector2i = Vector2i(-1, -1)
 var ui_layer: CanvasLayer
 
 
-@export var yenile_ve_olustur: bool = false : set = set_olustur
+@export var refresh_and_create: bool = false : set = set_create
 
 var board: Array = []
 var multimesh_instance: MultiMeshInstance3D
@@ -83,7 +83,7 @@ func _ready():
 			if "ssr_enabled" in env: env.ssr_enabled = false
 
 		# Table Collision Isolation
-		for table_name in ["OyuncuMasa", "BossMasa"]:
+		for table_name in ["PlayerTable", "BossTable"]:
 			var table = get_parent().find_child(table_name, true, false)
 			if table: table.collision_layer = 1 # Keep on default layer, away from Props (4)
 		for type in ["mirror", "piston", "rope"]:
@@ -93,7 +93,7 @@ func _ready():
 				_ensure_item_collision(item, type)
 				item.visible = false
 
-		temizle()
+		clear_grid()
 		generate_table()
 		generate_grid()
 
@@ -108,8 +108,8 @@ func _ready():
 		# Hover Indicator setup
 		hover_indicator = MeshInstance3D.new()
 		var ind_mesh = CylinderMesh.new()
-		ind_mesh.top_radius = hucre_boyutu * 0.4
-		ind_mesh.bottom_radius = hucre_boyutu * 0.4
+		ind_mesh.top_radius = cell_size * 0.4
+		ind_mesh.bottom_radius = cell_size * 0.4
 		ind_mesh.height = 0.01
 		hover_indicator.mesh = ind_mesh
 		var ind_mat = StandardMaterial3D.new()
@@ -132,13 +132,13 @@ func setup_boss_animation():
 		
 		var anim_player = sitting.find_child("AnimationPlayer", true, false)
 		if anim_player and anim_player is AnimationPlayer:
-			# Godot 4: Animasyonlar artık kütüphanelere (AnimationLibrary) ekleniyor
+			# Godot 4: Animations are added to libraries (AnimationLibrary)
 			var lib = anim_player.get_animation_library("")
 			if not lib:
 				lib = AnimationLibrary.new()
 				anim_player.add_animation_library("", lib)
 			
-			# Yeni animasyonları yükle ve kütüphaneye ekle
+			# Load new animations and add to library
 			var anims = {
 				"dice": "res://dice.res",
 				"lose": "res://lose.res",
@@ -151,18 +151,18 @@ func setup_boss_animation():
 				if FileAccess.file_exists(res_path):
 					var a_res = load(res_path)
 					if a_res:
-						# Kütüphaneden eski animasyonu silip yenisini ekleyelim
+						# Remove old animation from library and add new one
 						if lib.has_animation(a_name):
 							lib.remove_animation(a_name)
 						lib.add_animation(a_name, a_res)
 						
-						# Loop ayarları (Animasyon kaynağı üzerinde yapılır)
+						# Loop settings
 						if a_name == "win" or a_name == "lose":
 							a_res.loop_mode = Animation.LOOP_LINEAR
 						else:
 							a_res.loop_mode = Animation.LOOP_NONE
 			
-			# Varsayılan idle animasyonu bul ve başlat
+			# Find and start default idle animation
 			var idle_names = ["mixamo.com", "mixamo_com"]
 			for n in idle_names:
 				if anim_player.has_animation(n):
@@ -180,7 +180,7 @@ func play_boss_anim(anim_name: String):
 		anim_player.play(anim_name)
 		if anim_name == "dice" or anim_name == "use":
 			await anim_player.animation_finished
-			# Geri dön (mixamo idle animasyonu)
+			# Return to idle
 			var idle_names = ["mixamo.com", "mixamo_com"]
 			for n in idle_names:
 				if anim_player.has_animation(n):
@@ -189,19 +189,19 @@ func play_boss_anim(anim_name: String):
 
 func reset_board():
 	board.clear()
-	for i in range(grid_boyutu):
+	for i in range(grid_size):
 		var row = []
-		for j in range(grid_boyutu):
+		for j in range(grid_size):
 			row.append(0)
 		board.append(row)
 
-func set_olustur(_val):
+func set_create(_val):
 	if not is_inside_tree(): return
-	temizle()
+	clear_grid()
 	generate_table()
 	generate_grid()
 
-func temizle():
+func clear_grid():
 	for child in get_children(): 
 		if child is MultiMeshInstance3D or child.name == "GridMultiMesh" or child.name == "VisualTable" or child.name == "GridBase" or child.name == "GridCollision":
 			child.free()
@@ -213,8 +213,8 @@ func generate_table():
 	t.name = "VisualTable"
 	add_child(t)
 	
-	# Tablayı grid boyutuna göre ölçekle
-	var total_size = grid_boyutu * hucre_boyutu + 1.0
+	# Scale table based on grid size
+	var total_size = grid_size * cell_size + 1.0
 	t.scale = Vector3(total_size / 12.0, 1.0, total_size / 12.0)
 	
 	if Engine.is_editor_hint() and get_tree().edited_scene_root:
@@ -224,7 +224,7 @@ func generate_grid():
 	# Grid Base (A unified "board" surface under the cells)
 	var base_mesh = MeshInstance3D.new()
 	var base_box = BoxMesh.new()
-	var total_size = grid_boyutu * hucre_boyutu
+	var total_size = grid_size * cell_size
 	base_box.size = Vector3(total_size, 0.05, total_size)
 	base_mesh.mesh = base_box
 	var base_mat = StandardMaterial3D.new()
@@ -240,20 +240,20 @@ func generate_grid():
 	multimesh_instance.multimesh = MultiMesh.new()
 	multimesh_instance.multimesh.transform_format = MultiMesh.TRANSFORM_3D
 	multimesh_instance.multimesh.use_colors = true
-	multimesh_instance.multimesh.instance_count = grid_boyutu * grid_boyutu
+	multimesh_instance.multimesh.instance_count = grid_size * grid_size
 	
 	var cell_mesh = BoxMesh.new() # Use BoxMesh for "weight"
-	cell_mesh.size = Vector3(hucre_boyutu * 0.95, 0.02, hucre_boyutu * 0.95) # Smaller gaps
+	cell_mesh.size = Vector3(cell_size * 0.95, 0.02, cell_size * 0.95) # Smaller gaps
 	multimesh_instance.multimesh.mesh = cell_mesh
 	multimesh_instance.material_override = default_material
 	multimesh_instance.name = "GridMultiMesh"
 	
-	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
-	for x in range(grid_boyutu):
-		for z in range(grid_boyutu):
-			var idx = x * grid_boyutu + z
+	var offset = (grid_size - 1) * cell_size / 2.0
+	for x in range(grid_size):
+		for z in range(grid_size):
+			var idx = x * grid_size + z
 			var t = Transform3D()
-			t.origin = Vector3(x * hucre_boyutu - offset, 0.04, z * hucre_boyutu - offset)
+			t.origin = Vector3(x * cell_size - offset, 0.04, z * cell_size - offset)
 			multimesh_instance.multimesh.set_instance_transform(idx, t)
 			multimesh_instance.multimesh.set_instance_color(idx, Color(1, 1, 1, 1))
 	add_child(multimesh_instance)
@@ -298,8 +298,8 @@ func spawn_placement_vfx(coords: Vector2i, type: int):
 	# Flash effect
 	var flash = MeshInstance3D.new()
 	var flash_mesh = CylinderMesh.new()
-	flash_mesh.top_radius = hucre_boyutu * 0.5
-	flash_mesh.bottom_radius = hucre_boyutu * 0.5
+	flash_mesh.top_radius = cell_size * 0.5
+	flash_mesh.bottom_radius = cell_size * 0.5
 	flash_mesh.height = 0.1
 	flash.mesh = flash_mesh
 	
@@ -312,8 +312,8 @@ func spawn_placement_vfx(coords: Vector2i, type: int):
 	flash.material_override = mat
 	
 	add_child(flash)
-	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
-	flash.position = Vector3(coords.x * hucre_boyutu - offset, 0.1, coords.y * hucre_boyutu - offset)
+	var offset = (grid_size - 1) * cell_size / 2.0
+	flash.position = Vector3(coords.x * cell_size - offset, 0.1, coords.y * cell_size - offset)
 	
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property(flash, "scale", Vector3(1.5, 0.1, 1.5), 0.2)
@@ -382,7 +382,7 @@ func perform_raycast(is_click: bool = false):
 					else:
 						active_item = type # Select
 						node.scale = Vector3.ONE * 0.3 # Scale up as feedback
-						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SEÇİLDİ" + ("! (ŞEYTANI BAĞLA!)" if type == "rope" else ""))
+						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SELECTED" + ("! (BIND THE DEMON!)" if type == "rope" else ""))
 					return
 		
 		# Boss tıklama (Layer 8)
@@ -400,8 +400,8 @@ func handle_hover(result):
 		var coords = get_coords_from_pos(result.position)
 		if is_valid_coord(coords):
 			hover_indicator.visible = true
-			var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
-			hover_indicator.global_position = Vector3(coords.x * hucre_boyutu - offset, 0.06, coords.y * hucre_boyutu - offset) + global_position
+			var offset = (grid_size - 1) * cell_size / 2.0
+			hover_indicator.global_position = Vector3(coords.x * cell_size - offset, 0.06, coords.y * cell_size - offset) + global_position
 			
 			if board[coords.x][coords.y] == 0:
 				hover_indicator.material_override.albedo_color = Color(0, 1, 0, 0.4) # Green for valid
@@ -425,7 +425,7 @@ var last_hovered: Vector2i = Vector2i(-1, -1)
 
 func set_cell_hover_state(coords: Vector2i, is_hover: bool):
 	if not multimesh_instance: return
-	var idx = coords.x * grid_boyutu + coords.y
+	var idx = coords.x * grid_size + coords.y
 	var c = Color(2.0, 2.0, 1.0, 1.0) if is_hover else Color(1, 1, 1, 1)
 	multimesh_instance.multimesh.set_instance_color(idx, c)
 
@@ -450,7 +450,7 @@ func handle_click(result):
 			# Boss turn skip handling
 			if boss_skip_next_turn:
 				boss_skip_next_turn = false
-				if ui_layer: ui_layer.show_info_message("SIRA SENDE! (ŞEYTAN BAĞLI)")
+				if ui_layer: ui_layer.show_info_message("YOUR TURN! (DEMON BOUND)")
 			else:
 				if active_rope_node:
 					_clear_rope_visual()
@@ -463,14 +463,14 @@ func execute_item_logic(coords: Vector2i):
 				use_piston(coords)
 				active_item = ""
 			else:
-				if ui_layer: ui_layer.show_info_message("GEÇERSİZ: RAKİP TAŞI SEÇMELİSİN")
+				if ui_layer: ui_layer.show_info_message("INVALID: SELECT OPPONENT PIECE")
 		"rope":
 			pass # Use via direct boss click only
 		"mirror":
 			if mirror_source_coord == Vector2i(-1, -1):
 				if board[coords.x][coords.y] == 1:
 					mirror_source_coord = coords
-					if ui_layer: ui_layer.show_info_message("RAKİP TAŞINI SEÇ")
+					if ui_layer: ui_layer.show_info_message("SELECT OPPONENT PIECE")
 					# Visual feedback for selected stone (Pulse UP and stay at 1.0)
 					var piece = board_visuals.get(coords)
 					if piece:
@@ -478,19 +478,19 @@ func execute_item_logic(coords: Vector2i):
 						tween.tween_property(piece, "scale", Vector3.ONE * 1.3, 0.2)
 						tween.tween_property(piece, "scale", Vector3.ONE, 0.2)
 				else:
-					if ui_layer: ui_layer.show_info_message("GEÇERSİZ: KENDİ TAŞINI SEÇ")
+					if ui_layer: ui_layer.show_info_message("INVALID: SELECT YOUR PIECE")
 			else:
 				if board[coords.x][coords.y] == 2:
 					use_mirror(mirror_source_coord, coords)
 					active_item = ""
 					mirror_source_coord = Vector2i(-1, -1)
 				else:
-					if ui_layer: ui_layer.show_info_message("GEÇERSİZ: RAKİP TAŞINI SEÇ")
+					if ui_layer: ui_layer.show_info_message("INVALID: SELECT OPPONENT PIECE")
 
 func use_piston(coords: Vector2i):
 	var node = item_nodes.get("piston")
 	if node:
-		var target_pos = Vector3(coords.x * hucre_boyutu - ((grid_boyutu - 1) * hucre_boyutu / 2.0), 0.2, coords.y * hucre_boyutu - ((grid_boyutu - 1) * hucre_boyutu / 2.0)) + global_position
+		var target_pos = Vector3(coords.x * cell_size - ((grid_size - 1) * cell_size / 2.0), 0.2, coords.y * cell_size - ((grid_size - 1) * cell_size / 2.0)) + global_position
 		await _animate_prop_flight(node, target_pos, true)
 		node.visible = false
 		node.global_position = Vector3(0, -100, 0) # Move away to clear collision
@@ -501,7 +501,7 @@ func use_piston(coords: Vector2i):
 		piece.queue_free()
 		board_visuals.erase(coords)
 	board[coords.x][coords.y] = 0
-	if ui_layer: ui_layer.show_info_message("PİSTON KULLANILDI")
+	if ui_layer: ui_layer.show_info_message("PISTON USED")
 	
 	player_inventory.erase("piston")
 	boss_inventory.erase("piston")
@@ -514,12 +514,12 @@ func use_rope(from_boss: bool):
 	
 	if from_boss:
 		player_skip_next_turn = true
-		if ui_layer: ui_layer.show_info_message("ŞEYTAN SENİ BAĞLADI!")
+		if ui_layer: ui_layer.show_info_message("THE DEMON BOUND YOU!")
 		var cam = get_viewport().get_camera_3d()
 		target_pos = cam.global_position + cam.global_transform.basis.z * -0.5
 	else:
 		boss_skip_next_turn = true
-		if ui_layer: ui_layer.show_info_message("ŞEYTANI BAĞLADIN!")
+		if ui_layer: ui_layer.show_info_message("YOU BOUND THE DEMON!")
 		var boss = get_parent().find_child("Sitting", true, false)
 		target_pos = boss.global_position + Vector3(0, 1.5, 0) if boss else global_position + Vector3(0, 2, -1)
 	
@@ -558,7 +558,7 @@ func use_mirror(c1: Vector2i, c2: Vector2i):
 	tween.tween_property(v2, "scale", Vector3.ONE, 0.1)
 	board_visuals[c1] = v2
 	board_visuals[c2] = v1
-	if ui_layer: ui_layer.show_info_message("AYNA KULLANILDI")
+	if ui_layer: ui_layer.show_info_message("MIRROR USED")
 	if item_nodes["mirror"] and not is_boss_turn:
 
 		var itween = create_tween()
@@ -568,8 +568,8 @@ func use_mirror(c1: Vector2i, c2: Vector2i):
 func spawn_blood_particles(coords: Vector2i):
 	var particles = CPUParticles3D.new()
 	add_child(particles)
-	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
-	particles.position = Vector3(coords.x * hucre_boyutu - offset, 0.2, coords.y * hucre_boyutu - offset)
+	var offset = (grid_size - 1) * cell_size / 2.0
+	particles.position = Vector3(coords.x * cell_size - offset, 0.2, coords.y * cell_size - offset)
 	
 	particles.amount = 40
 	particles.lifetime = 1.0
@@ -595,60 +595,60 @@ func spawn_blood_particles(coords: Vector2i):
 
 func trigger_gamble():
 	play_boss_anim("dice")
-	if ui_layer: ui_layer.show_info_message("ZAR ATILDI...")
+	if ui_layer: ui_layer.show_info_message("DICE ROLLED...")
 	
 	# Fiziksel zarları fırlat
 	var dice_nodes = []
 	for i in range(2):
 		var d = dice_scene.instantiate()
 		get_parent().add_child(d)
-		# Gridin biraz üstünden fırlat
+		# Toss dice slightly above the grid
 		d.global_position = global_position + Vector3(randf_range(-0.5, 0.5), 3.0, randf_range(-0.5, 0.5))
-		# Rastgele dönme ve hız ver
+		# Apply random rotation and velocity
 		d.apply_impulse(Vector3(randf_range(-1, 1), -2, randf_range(-1, 1)))
 		d.apply_torque_impulse(Vector3(randf_range(-5, 5), randf_range(-5, 5), randf_range(-5, 5)))
 		dice_nodes.append(d)
 	
-	# Zarların düşmesini bekle
+	# Wait for dice to fall
 	await get_tree().create_timer(2.5).timeout
 	
 	var total = (randi() % 6 + 1) + (randi() % 6 + 1)
-	if ui_layer: ui_layer.show_info_message("Zar " + str(total) + " geldi!")
+	if ui_layer: ui_layer.show_info_message("Dice rolled " + str(total) + "!")
 	await get_tree().create_timer(1.0).timeout
 	
 	if total < 7: 
-		if ui_layer: ui_layer.show_info_message("Şans senden yana!")
+		if ui_layer: ui_layer.show_info_message("Luck is on your side!")
 		await get_tree().create_timer(1.0).timeout
 		give_random_item("player")
 	elif total > 7: 
-		if ui_layer: ui_layer.show_info_message("Şans şeytandan yana!")
+		if ui_layer: ui_layer.show_info_message("Luck is on the demon's side!")
 		await get_tree().create_timer(1.0).timeout
 		give_random_item("boss")
 	else: 
-		# Beraberlik durumunda tekrarla
+		# Repeat on draw
 		for d in dice_nodes: d.queue_free()
 		await trigger_gamble()
 		return
 	
-	# Zarları temizle (Yavaşça yok et)
+	# Clear dice (fade out slowly)
 	await get_tree().create_timer(1.5).timeout
 	for d in dice_nodes:
 		var tween = create_tween()
 		tween.tween_property(d, "scale", Vector3.ZERO, 0.5)
 		tween.finished.connect(d.queue_free)
 	
-	# Karakter animasyonundan kalan zarları gizle (Eski kod desteği)
+	# Hide remaining dice from character animation (legacy support)
 	var char_dice = get_parent().find_child("dice", true, false)
 	if not char_dice: char_dice = get_parent().find_child("zar", true, false)
 	if char_dice: char_dice.visible = false
 
 func give_random_item(target: String):
 	var type = ["mirror", "piston", "rope"][randi() % 3]
-	var item_names_tr = {"mirror": "AYNA", "piston": "PİSTON", "rope": "HALAT"}
+	var item_names_en = {"mirror": "MIRROR", "piston": "PISTON", "rope": "ROPE"}
 	
 	if target == "player":
 		player_inventory.append(type)
-		if ui_layer: ui_layer.show_info_message(item_names_tr[type] + " VERİLDİ")
+		if ui_layer: ui_layer.show_info_message(item_names_en[type] + " GIVEN")
 		
 		var node = item_nodes.get(type)
 		if node:
@@ -657,7 +657,7 @@ func give_random_item(target: String):
 			_animate_to_table(node, slot_pos)
 	else:
 		boss_inventory.append(type)
-		if ui_layer: ui_layer.show_info_message("ŞEYTANA " + item_names_tr[type] + " VERİLDİ")
+		if ui_layer: ui_layer.show_info_message(item_names_en[type] + " GIVEN TO THE DEMON")
 		var node = item_nodes.get(type)
 		if node:
 			node.visible = true
@@ -688,7 +688,7 @@ func _animate_to_table(node, target_pos):
 	tween.tween_property(node, "rotation_degrees:y", randf_range(-25, 25), 1.2)
 
 func _get_item_slot_pos(target: String, idx: int) -> Vector3:
-	var masa_name = "OyuncuMasa" if target == "player" else "BossMasa"
+	var masa_name = "PlayerTable" if target == "player" else "BossTable"
 	var masa = get_parent().find_child(masa_name, true, false)
 	if not masa: return global_position + Vector3(0, 1, 0)
 	
@@ -738,7 +738,7 @@ func boss_turn():
 		# Player turn skip handling (Consecutive moves for Boss)
 		if player_skip_next_turn:
 			player_skip_next_turn = false
-			if ui_layer: ui_layer.show_info_message("SIRAN ATLANDI! (BAĞLISIN)")
+			if ui_layer: ui_layer.show_info_message("YOUR TURN SKIPPED! (YOU ARE BOUND)")
 			await get_tree().create_timer(1.5).timeout
 			boss_turn()
 		else:
@@ -760,8 +760,8 @@ func evaluate_boss_item_usage():
 		await use_rope(true)
 
 func _find_player_threat() -> Vector2i:
-	for x in range(grid_boyutu):
-		for z in range(grid_boyutu):
+	for x in range(grid_size):
+		for z in range(grid_size):
 			if board[x][z] == 1: return Vector2i(x, z)
 	return Vector2i(-1, -1)
 
@@ -770,7 +770,7 @@ func place_piece(coords: Vector2i, type: int):
 	
 	var scene = stone_scene if type == 1 else finger_scene
 	if not scene:
-		print("HATA: Scene yuklenemedi! Yeniden yukleniyor...")
+		print("ERROR: Scene could not be loaded! Reloading...")
 		stone_scene = load("res://Assets/stone/scene.gltf")
 		finger_scene = load("res://Assets/finger/scene.gltf")
 		scene = stone_scene if type == 1 else finger_scene
@@ -778,12 +778,12 @@ func place_piece(coords: Vector2i, type: int):
 	if not scene: return # Hala null ise cik
 	
 	var piece = scene.instantiate()
-	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
+	var offset = (grid_size - 1) * cell_size / 2.0
 	
 	if type == 1: # Stone (Oyuncu)
-		piece.position = Vector3(coords.x * hucre_boyutu - offset, 0.05, coords.y * hucre_boyutu - offset)
+		piece.position = Vector3(coords.x * cell_size - offset, 0.05, coords.y * cell_size - offset)
 	else: # Finger (Boss) - Now using black stone
-		piece.position = Vector3(coords.x * hucre_boyutu - offset, 0.05, coords.y * hucre_boyutu - offset)
+		piece.position = Vector3(coords.x * cell_size - offset, 0.05, coords.y * cell_size - offset)
 		
 	add_child(piece)
 	board_visuals[coords] = piece
@@ -823,8 +823,8 @@ func check_win(c: Vector2i, p: int) -> bool:
 
 func check_draw() -> bool:
 	var directions = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1), Vector2i(1, -1)]
-	for x in range(grid_boyutu):
-		for z in range(grid_boyutu):
+	for x in range(grid_size):
+		for z in range(grid_size):
 			for dir in directions:
 				var p1_possible = true
 				var p2_possible = true
@@ -843,8 +843,8 @@ func _get_best_move() -> Vector2i:
 	var best_score = -1.0
 	var best_move = Vector2i(-1, -1)
 	var candidates = []
-	for x in range(grid_boyutu):
-		for z in range(grid_boyutu):
+	for x in range(grid_size):
+		for z in range(grid_size):
 			if board[x][z] == 0:
 				var score = _evaluate_cell(Vector2i(x, z))
 				if score > best_score:
@@ -859,7 +859,7 @@ func _evaluate_cell(c: Vector2i) -> float:
 	for dir in directions:
 		score += _score_direction(c, dir, 2)
 		score += _score_direction(c, dir, 1)
-	var center = float(grid_boyutu) / 2.0
+	var center = float(grid_size) / 2.0
 	score += (5.0 - Vector2(c.x, c.y).distance_to(Vector2(center, center))) * 2.0
 	return score
 
@@ -920,13 +920,13 @@ func _score_direction(c: Vector2i, dir: Vector2i, p: int) -> float:
 
 func get_coords_from_pos(pos: Vector3) -> Vector2i:
 	var local_pos = to_local(pos)
-	var offset = (grid_boyutu - 1) * hucre_boyutu / 2.0
-	var x = round((local_pos.x + offset) / hucre_boyutu)
-	var z = round((local_pos.z + offset) / hucre_boyutu)
+	var offset = (grid_size - 1) * cell_size / 2.0
+	var x = round((local_pos.x + offset) / cell_size)
+	var z = round((local_pos.z + offset) / cell_size)
 	return Vector2i(int(x), int(z))
 
 func is_valid_coord(c: Vector2i) -> bool:
-	return c.x >= 0 and c.x < grid_boyutu and c.y >= 0 and c.y < grid_boyutu
+	return c.x >= 0 and c.x < grid_size and c.y >= 0 and c.y < grid_size
 
 func end_game(status: String):
 	game_over = true
@@ -948,7 +948,7 @@ func restart_game():
 	var camera = get_viewport().get_camera_3d()
 	if camera and camera.has_method("reset_rotation"):
 		camera.reset_rotation()
-	# Idle animasyonuna dön
+	# Return to idle animation
 	var sitting = get_parent().find_child("Sitting", true, false)
 	if sitting:
 		var anim_player = sitting.find_child("AnimationPlayer", true, false)
@@ -973,7 +973,7 @@ func restart_game():
 			item_nodes[type].scale = Vector3.ONE * 0.2
 	board_visuals.clear()
 	reset_board()
-	# Görsel taşları ve particlesları temizle
+	# Clear visual stones and particles
 	for child in get_children():
-		if child.name != "Masa" and child.name != "GridMultiMesh" and child.name != "HoverIndicator" and child.name != "GridBase" and child.name != "GridCollision" and (child is Node3D or child is CPUParticles3D):
+		if child.name != "Table" and child.name != "GridMultiMesh" and child.name != "HoverIndicator" and child.name != "GridBase" and child.name != "GridCollision" and (child is Node3D or child is CPUParticles3D):
 			child.queue_free()

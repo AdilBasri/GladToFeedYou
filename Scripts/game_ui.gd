@@ -8,21 +8,21 @@ var perk_status_label: Label
 var info_label: Label
 
 func _ready():
-	# UI elementlerini oluştur
+	# Create UI elements
 	setup_ui()
 	hide_ui()
 	
-	# GridManager'a bağlan
+	# Connect to GridManager
 	var grid = get_tree().root.find_child("GridManager", true, false)
 	if grid:
 		grid.game_ended.connect(_on_game_ended)
 
 func setup_ui():
-	# Crosshair (Nişangah) ekle
+	# Add Crosshair
 	var crosshair = Control.new()
 	crosshair.name = "Crosshair"
 	crosshair.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	# Nişangahı tam ortalayalım (Hata payını azaltmak için)
+	# Center it perfectly
 	# crosshair.position.y -= 40 
 	add_child(crosshair)
 	crosshair.modulate.a = 0
@@ -31,16 +31,16 @@ func setup_ui():
 	var dot = ColorRect.new()
 	dot.custom_minimum_size = Vector2(4, 4)
 	dot.position = Vector2(-2, -2)
-	dot.color = Color(1, 1, 0.8) # Hafif sarımsı
+	dot.color = Color(1, 1, 0.8) # Light yellow
 	crosshair.add_child(dot)
 	
 	var glow = ColorRect.new()
 	glow.custom_minimum_size = Vector2(10, 10)
 	glow.position = Vector2(-5, -5)
-	glow.color = Color(1, 0.5, 0, 0.2) # Turuncu-Sarı Glow
+	glow.color = Color(1, 0.5, 0, 0.2) # Orange-Yellow Glow
 	crosshair.add_child(glow)
 
-	# Perk/Durum Mesajı (Sol Üst Köşe)
+	# Perk/Status Message (Top Left Corner)
 	var perk_container = MarginContainer.new()
 	perk_container.add_theme_constant_override("margin_left", 20)
 	perk_container.add_theme_constant_override("margin_top", 20)
@@ -51,7 +51,7 @@ func setup_ui():
 	perk_status_label.add_theme_font_size_override("font_size", 24)
 	perk_container.add_child(perk_status_label)
 	
-	# Top Info Label (Üst Orta)
+	# Top Info Label (Top Center)
 	var info_container = CenterContainer.new()
 	info_container.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
 	info_container.custom_minimum_size.y = 100
@@ -64,7 +64,7 @@ func setup_ui():
 	info_label.modulate.a = 0
 	info_container.add_child(info_label)
 
-	# Arka plan karartma
+	# Background dimming
 	overlay = ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.0) # Start transparent
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -80,7 +80,7 @@ func setup_ui():
 	container.add_theme_constant_override("separation", 20)
 	center_container.add_child(container)
 	
-	# Durum Mesajı
+	# Status Message
 	status_label = Label.new()
 	status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	status_label.add_theme_color_override("font_color", Color(0.9, 0.1, 0.1)) # Brighter Red
@@ -91,9 +91,9 @@ func setup_ui():
 	spacer.custom_minimum_size = Vector2(0, 60)
 	container.add_child(spacer)
 	
-	# Butonlar
+	# Buttons
 	restart_button = Button.new()
-	restart_button.text = "YENİDEN DENE"
+	restart_button.text = "RETRY"
 	restart_button.custom_minimum_size = Vector2(400, 100)
 	restart_button.add_theme_font_size_override("font_size", 44)
 	restart_button.flat = true # Use flat but with custom hover
@@ -103,7 +103,7 @@ func setup_ui():
 	container.add_child(restart_button)
 	
 	quit_button = Button.new()
-	quit_button.text = "BOŞLUĞA DÖN"
+	quit_button.text = "RETURN TO VOID"
 	quit_button.custom_minimum_size = Vector2(400, 80)
 	quit_button.add_theme_font_size_override("font_size", 32)
 	quit_button.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
@@ -118,11 +118,11 @@ func show_ui(status: String):
 	
 	match status:
 		"WIN":
-			status_label.text = "FIRSAT PENCERESİ"
+			status_label.text = "WINDOW OF OPPORTUNITY"
 		"LOSS":
-			status_label.text = "HASAT EDİLDİN"
+			status_label.text = "YOU WERE HARVESTED"
 		"DRAW":
-			status_label.text = "SONSUZ DÖNGÜ"
+			status_label.text = "INFINITE LOOP"
 	
 	status_label.scale = Vector2.ZERO
 	var tween_s = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -138,8 +138,6 @@ func hide_ui():
 		await tween.finished
 		overlay.visible = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED 
-
-
 
 func show_perk_message(msg: String, duration: float = 3.0):
 	perk_status_label.text = msg
@@ -176,8 +174,7 @@ func show_info_message(msg: String, duration: float = 2.5):
 	fade_final.tween_property(info_label, "modulate:a", 0.0, 0.5)
 
 func _on_game_ended(status: String):
-
-	# Kısa bir gecikme ile göster (Boss LookAt ve animasyonlar için)
+	# Show after a short delay (for Boss LookAt and animations)
 	await get_tree().create_timer(1.2).timeout
 	show_ui(status)
 

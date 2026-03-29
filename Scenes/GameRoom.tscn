@@ -7597,7 +7597,7 @@ autoplay = "mixamo_com"
 [node name="GridManager" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3451796, 2.389616)
 script = ExtResource("4_d3w75")
-hucre_boyutu = 0.5
+cell_size = 0.5
 table_scene = null
 
 [node name="GridBase" type="MeshInstance3D" parent="GridManager"]
@@ -8036,39 +8036,39 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.014697, 1.8178244, -2.2433
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 light_energy = 0.3
 
-[node name="OyuncuMasa" type="CSGBox3D" parent="."]
+[node name="PlayerTable" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5019717, -3.477131, 4.408104)
 use_collision = true
 collision_layer = 255
 size = Vector3(1.8896484, 1.3164063, 3.0438385)
 material = SubResource("StandardMaterial3D_3klrs")
 
-[node name="mirror" parent="OyuncuMasa" instance=ExtResource("8_1oesn")]
+[node name="mirror" parent="PlayerTable" instance=ExtResource("8_1oesn")]
 transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -0.04082775, 0.893728, 1.0655627)
 visible = false
 
-[node name="piston" parent="OyuncuMasa" instance=ExtResource("9_t82ed")]
+[node name="piston" parent="PlayerTable" instance=ExtResource("9_t82ed")]
 transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, -0.07650995, 2.0819535, 0.13139391)
 visible = false
 
-[node name="rope" parent="OyuncuMasa" instance=ExtResource("10_6weqo")]
+[node name="rope" parent="PlayerTable" instance=ExtResource("10_6weqo")]
 transform = Transform3D(0.2, 0, 0, 0, 0.0029459994, 0.1999783, 0, -0.1999783, 0.0029459994, -0.18564224, 1.7003945, -1.1133902)
 visible = false
 
-[node name="BossMasa" type="CSGBox3D" parent="."]
+[node name="BossTable" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.494056, -3.477131, -0.6280819)
 use_collision = true
 collision_layer = 255
 size = Vector3(1.8896484, 1.3164063, 3.0438385)
 material = SubResource("StandardMaterial3D_3klrs")
 
-[node name="prop1" type="Marker3D" parent="BossMasa"]
+[node name="prop1" type="Marker3D" parent="BossTable"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0010672, 0.80881596)
 
-[node name="prop2" type="Marker3D" parent="BossMasa"]
+[node name="prop2" type="Marker3D" parent="BossTable"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0057526, 0.0367285)
 
-[node name="prop3" type="Marker3D" parent="BossMasa"]
+[node name="prop3" type="Marker3D" parent="BossTable"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0024595, -0.8073103)
 
 [node name="Props" type="CSGBox3D" parent="."]
@@ -8358,7 +8358,7 @@ transform = Transform3D(-2.1855695e-09, 0, 0.05, 0, 0.05, 0, -0.05, 0, -2.185569
 transform = Transform3D(-2.1855695e-09, 0, 0.05, 0, 0.05, 0, -0.05, 0, -2.1855695e-09, 9.672943, -4.0587797, 4.2027245)
 
 [node name="Sketchfab_Scene" parent="." instance=ExtResource("22_26mxa")]
-transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0.07692623, -3.9767394, -0.7476735)
+transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0.07692623, -4.077701, -0.7476735)
 
 [editable path="Taht"]
 [editable path="Sitting"]

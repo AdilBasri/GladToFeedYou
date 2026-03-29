@@ -1,13 +1,13 @@
 extends Camera3D
 
-@export var hassasiyet = 0.08
-@export var limit_y = 100.0  # Yatay (Sağ/Sol)
-@export var limit_x = 75.0  # Dikey (Yukarı/Aşağı)
+@export var sensitivity = 0.08
+@export var limit_y = 100.0  # Horizontal (Left/Right)
+@export var limit_x = 75.0  # Vertical (Up/Down)
 
 var yaw: float = 0.0
 var pitch: float = 0.0
-var baslangic_y: float = 0.0
-var baslangic_x: float = 0.0
+var start_y: float = 0.0
+var start_x: float = 0.0
 var is_locked: bool = false
 
 # Shake Params
@@ -16,28 +16,28 @@ var shake_duration: float = 0.0
 var shake_offset: Vector3 = Vector3.ZERO
 
 func _ready():
-	# Mouse yakala (GİZLE)
+	# Capture mouse (HIDE)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	
-	# Masayı bul ve ona bakarak açıyı ortala
+	# Find table and center view
 	var grid = get_tree().root.find_child("GridManager", true, false)
 	if grid:
 		look_at(grid.global_position)
-		baslangic_y = rotation_degrees.y
-		baslangic_x = rotation_degrees.x
-		yaw = baslangic_y
-		pitch = baslangic_x
+		start_y = rotation_degrees.y
+		start_x = rotation_degrees.x
+		yaw = start_y
+		pitch = start_x
 	else:
 		yaw = rotation_degrees.y
 		pitch = rotation_degrees.x
-		baslangic_y = yaw
-		baslangic_x = pitch
+		start_y = yaw
+		start_x = pitch
 	
 	setup_viewmodel_rendering()
 
 func reset_rotation():
-	yaw = baslangic_y
-	pitch = baslangic_x
+	yaw = start_y
+	pitch = start_x
 	rotation_degrees.y = yaw
 	rotation_degrees.x = pitch
 	# Warp mouse to center to sync with reset yaw/pitch
@@ -49,9 +49,9 @@ func apply_shake(intensity: float, duration: float):
 	shake_duration = duration
 
 func setup_viewmodel_rendering():
-	var el = find_child("el_tam", true, false)
-	if el:
-		_apply_no_depth_recursive(el, 10)
+	var hand = find_child("el_tam", true, false)
+	if hand:
+		_apply_no_depth_recursive(hand, 10)
 	
 	var mice = find_child("mice", true, false)
 	if mice:
@@ -64,7 +64,7 @@ func setup_mice_animations(mice_node: Node):
 		var all_anims = anim_player.get_animation_list()
 		var sequence = []
 		
-		# Animasyonları 1, 2, 3 sırasına göre dizelim
+		# Sequence animations 1, 2, 3
 		for suffix in ["1", "2", "3"]:
 			for a in all_anims:
 				if a.ends_with(suffix):
@@ -72,9 +72,9 @@ func setup_mice_animations(mice_node: Node):
 					break
 		
 		if sequence.size() > 0:
-			# İlkini başlat
+			# Play the first one
 			anim_player.play(sequence[0])
-			# Bittiğinde sonrakine geçmesi için sinyal bağla
+			# Connect signal to play the next one when finished
 			anim_player.animation_finished.connect(func(anim_name):
 				var idx = sequence.find(anim_name)
 				if idx != -1:
@@ -103,13 +103,13 @@ func _apply_no_depth_recursive(node: Node, priority: int):
 func _input(event):
 	if is_locked: return
 	if event is InputEventMouseMotion:
-		# Mouse hareketini doğrudan bakışa çevir
-		yaw -= event.relative.x * hassasiyet
-		pitch -= event.relative.y * hassasiyet
+		# Convert mouse motion to rotation
+		yaw -= event.relative.x * sensitivity
+		pitch -= event.relative.y * sensitivity
 		
-		# Limitler (BAŞLANGIÇ AÇILARINA GÖRE GÖRELİ)
-		yaw = clamp(yaw, baslangic_y - limit_y, baslangic_y + limit_y)
-		pitch = clamp(pitch, baslangic_x - limit_x, baslangic_x + limit_x)
+		# Limits (RELATIVE TO START ANGLES)
+		yaw = clamp(yaw, start_y - limit_y, start_y + limit_y)
+		pitch = clamp(pitch, start_x - limit_x, start_x + limit_x)
 
 func _process(_delta):
 	if is_locked: return
@@ -126,7 +126,7 @@ func _process(_delta):
 	else:
 		shake_offset = shake_offset.lerp(Vector3.ZERO, _delta * 10.0)
 
-	# Nefes alma (Breathing) efekti
+	# Breathing effect
 	var t = Time.get_ticks_msec() * 0.001
 	var breath_yaw = sin(t * 1.1) * 0.12
 	var breath_pitch = cos(t * 0.8) * 0.15
