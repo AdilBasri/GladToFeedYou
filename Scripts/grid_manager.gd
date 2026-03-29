@@ -371,17 +371,18 @@ func perform_raycast(is_click: bool = false):
 			if body == collider:
 				if player_inventory.has(type):
 					var node = item_nodes[type]
+					var target_scale = 0.08 if type == "piston" else 0.15
 					if active_item == type:
 						active_item = "" # Deselect
+						node.scale = Vector3.ONE * target_scale
 						# Reset previous source scale if deselected
 						if mirror_source_coord != Vector2i(-1, -1):
 							var piece = board_visuals.get(mirror_source_coord)
 							if piece: piece.scale = Vector3.ONE
 						mirror_source_coord = Vector2i(-1, -1)
-						node.scale = Vector3.ONE * 0.2
 					else:
 						active_item = type # Select
-						node.scale = Vector3.ONE * 0.3 # Scale up as feedback
+						node.scale = Vector3.ONE * target_scale * 1.5 # Relative scale up
 						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SELECTED" + ("! (BIND THE DEMON!)" if type == "rope" else ""))
 					return
 		
@@ -442,19 +443,30 @@ func handle_click(result):
 	if board[coords.x][coords.y] == 0:
 		place_piece(coords, 1)
 		player_moved.emit(coords)
+		
+		# Immediate Win Check
+		if check_win(coords, 1): 
+			end_game("WIN")
+			return
+		elif check_draw(): 
+			end_game("DRAW")
+			return
+			
 		turn_counter += 1
-		if turn_counter % 3 == 0: await trigger_gamble()
-		if check_win(coords, 1): end_game("WIN")
-		elif check_draw(): end_game("DRAW")
+		if turn_counter % 3 == 0:
+			var player_keeps_turn = await trigger_gamble()
+			if player_keeps_turn:
+				if ui_layer: ui_layer.show_info_message("STILL YOUR TURN!")
+				return # Skip boss turn
+
+		# Boss turn transition
+		if boss_skip_next_turn:
+			boss_skip_next_turn = false
+			if ui_layer: ui_layer.show_info_message("YOUR TURN! (DEMON BOUND)")
 		else:
-			# Boss turn skip handling
-			if boss_skip_next_turn:
-				boss_skip_next_turn = false
-				if ui_layer: ui_layer.show_info_message("YOUR TURN! (DEMON BOUND)")
-			else:
-				if active_rope_node:
-					_clear_rope_visual()
-				boss_turn()
+			if active_rope_node:
+				_clear_rope_visual()
+			boss_turn()
 
 func execute_item_logic(coords: Vector2i):
 	match active_item:
@@ -490,8 +502,18 @@ func execute_item_logic(coords: Vector2i):
 func use_piston(coords: Vector2i):
 	var node = item_nodes.get("piston")
 	if node:
-		var target_pos = Vector3(coords.x * cell_size - ((grid_size - 1) * cell_size / 2.0), 0.2, coords.y * cell_size - ((grid_size - 1) * cell_size / 2.0)) + global_position
-		await _animate_prop_flight(node, target_pos, true)
+		var target_base = Vector3(coords.x * cell_size - ((grid_size - 1) * cell_size / 2.0), 0.05, coords.y * cell_size - ((grid_size - 1) * cell_size / 2.0)) + global_position
+		# Ensure we are on top of the stone if present
+		var piece = board_visuals.get(coords)
+		if piece:
+			place_object_on_surface(node, target_base + Vector3(0, 0.05, 0)) # Offset slightly for collision if needed, but logic handles it
+		else:
+			place_object_on_surface(node, target_base)
+		
+		var final_target = node.global_position
+		# Reset to flight start for animation
+		node.global_position = node.global_position # (Keep it for now, _animate handles flight)
+		await _animate_prop_flight(node, final_target, true)
 		node.visible = false
 		node.global_position = Vector3(0, -100, 0) # Move away to clear collision
 	
@@ -559,11 +581,19 @@ func use_mirror(c1: Vector2i, c2: Vector2i):
 	board_visuals[c1] = v2
 	board_visuals[c2] = v1
 	if ui_layer: ui_layer.show_info_message("MIRROR USED")
-	if item_nodes["mirror"] and not is_boss_turn:
+	
+	# Win Check after swap
+	if check_win(c1, board[c1.x][c1.y]) or check_win(c2, board[c2.x][c2.y]):
+		var winner = board[c1.x][c1.y] if check_win(c1, board[c1.x][c1.y]) else board[c2.x][c2.y]
+		end_game("WIN" if winner == 1 else "LOSS")
+		return
 
+	if item_nodes["mirror"] and not is_boss_turn:
 		var itween = create_tween()
 		itween.tween_property(item_nodes["mirror"], "scale", Vector3.ZERO, 0.3)
 		player_inventory.erase("mirror")
+	elif is_boss_turn:
+		boss_inventory.erase("mirror")
 
 func spawn_blood_particles(coords: Vector2i):
 	var particles = CPUParticles3D.new()
@@ -593,6 +623,37 @@ func spawn_blood_particles(coords: Vector2i):
 	particles.emitting = true
 	get_tree().create_timer(1.2).timeout.connect(particles.queue_free)
 
+func place_object_on_surface(object_node: Node3D, contact_point: Vector3):
+	var mesh_node = _find_mesh_recursive(object_node)
+	if not mesh_node:
+		object_node.global_position = contact_point
+		return
+
+	var aabb: AABB
+	if mesh_node is MeshInstance3D:
+		aabb = mesh_node.mesh.get_aabb()
+	elif mesh_node is CSGBox3D:
+		aabb = AABB(Vector3(-mesh_node.size.x/2, -mesh_node.size.y/2, -mesh_node.size.z/2), mesh_node.size)
+	
+	# More robust math: Calculate current global Y of the bottom point
+	# and move the root node by the required difference.
+	var local_bottom_center = Vector3(0, aabb.position.y, 0)
+	var global_bottom_center = mesh_node.to_global(local_bottom_center)
+	
+	var y_diff = (contact_point.y + 0.02) - global_bottom_center.y # Added 0.02 safe offset
+	object_node.global_position.y += y_diff
+	
+	# Horizontal alignment
+	object_node.global_position.x = contact_point.x
+	object_node.global_position.z = contact_point.z
+
+func _find_mesh_recursive(node: Node) -> Node:
+	if node is MeshInstance3D or node is CSGBox3D: return node
+	for child in node.get_children():
+		var found = _find_mesh_recursive(child)
+		if found: return found
+	return null
+
 func trigger_gamble():
 	play_boss_anim("dice")
 	if ui_layer: ui_layer.show_info_message("DICE ROLLED...")
@@ -617,18 +678,19 @@ func trigger_gamble():
 	await get_tree().create_timer(1.0).timeout
 	
 	if total < 7: 
-		if ui_layer: ui_layer.show_info_message("Luck is on your side!")
+		if ui_layer: ui_layer.show_info_message("Luck is on your side! YOUR TURN!")
 		await get_tree().create_timer(1.0).timeout
 		give_random_item("player")
+		return true # Player gets another turn / keeps turn
 	elif total > 7: 
-		if ui_layer: ui_layer.show_info_message("Luck is on the demon's side!")
+		if ui_layer: ui_layer.show_info_message("Luck is on the demon's side! DEMON MOVES!")
 		await get_tree().create_timer(1.0).timeout
 		give_random_item("boss")
+		return false # Transition to boss
 	else: 
 		# Repeat on draw
 		for d in dice_nodes: d.queue_free()
-		await trigger_gamble()
-		return
+		return await trigger_gamble()
 	
 	# Clear dice (fade out slowly)
 	await get_tree().create_timer(1.5).timeout
@@ -646,23 +708,27 @@ func give_random_item(target: String):
 	var type = ["mirror", "piston", "rope"][randi() % 3]
 	var item_names_en = {"mirror": "MIRROR", "piston": "PISTON", "rope": "ROPE"}
 	
+	var node = item_nodes.get(type)
+	if not node: return
+	
+	node.visible = true
+	var target_scale = 0.08 if type == "piston" else 0.15
+	node.scale = Vector3.ONE * target_scale
+	
 	if target == "player":
 		player_inventory.append(type)
 		if ui_layer: ui_layer.show_info_message(item_names_en[type] + " GIVEN")
 		
-		var node = item_nodes.get(type)
-		if node:
-			node.visible = true
-			var slot_pos = _get_item_slot_pos("player", player_inventory.size() - 1)
-			_animate_to_table(node, slot_pos)
+		var slot_pos = _get_item_slot_pos("player", player_inventory.size() - 1)
+		place_object_on_surface(node, slot_pos)
+		_animate_to_table(node, node.global_position)
 	else:
 		boss_inventory.append(type)
 		if ui_layer: ui_layer.show_info_message(item_names_en[type] + " GIVEN TO THE DEMON")
-		var node = item_nodes.get(type)
-		if node:
-			node.visible = true
-			var slot_pos = _get_item_slot_pos("boss", boss_inventory.size() - 1)
-			_animate_to_table(node, slot_pos)
+		
+		var slot_pos = _get_item_slot_pos("boss", boss_inventory.size() - 1)
+		place_object_on_surface(node, slot_pos)
+		_animate_to_table(node, node.global_position)
 
 func _animate_to_table(node, target_pos):
 	var type = ""
@@ -678,24 +744,25 @@ func _animate_to_table(node, target_pos):
 	tween.tween_property(node, "rotation_degrees:x", 0.0, 1.2)
 	tween.tween_property(node, "rotation_degrees:z", 0.0, 1.2)
 	
-	# Compensate selection body scale so it stays at ~1.0 in world space
-	var sb = node.find_child("SelectionBody", true, false)
-	if sb:
-		var inv_scale = 1.0 / target_scale
-		tween.tween_property(sb, "scale", Vector3.ONE * inv_scale, 1.2)
-	
 	# Add randomized yaw rotation for "solid" feeling
 	tween.tween_property(node, "rotation_degrees:y", randf_range(-25, 25), 1.2)
 
 func _get_item_slot_pos(target: String, idx: int) -> Vector3:
-	var masa_name = "PlayerTable" if target == "player" else "BossTable"
-	var masa = get_parent().find_child(masa_name, true, false)
-	if not masa: return global_position + Vector3(0, 1, 0)
+	var table_name = "PlayerTable" if target == "player" else "BossTable"
+	var table = get_parent().find_child(table_name, true, false)
+	if not table: return global_position + Vector3(0, 1, 0)
+	
+	# Determine table top Y (assuming CSGBox3D or MeshInstance3D)
+	var top_y = 0.0
+	if table is CSGBox3D:
+		top_y = table.size.y / 2.0
+	elif table is MeshInstance3D:
+		top_y = table.mesh.get_aabb().size.y / 2.0
 	
 	# Slot spacing: 1.0 units apart for better separation
 	var x_offset = -1.0 + (idx * 1.0) if target == "player" else 1.0 - (idx * 1.0)
-	var local_pos = Vector3(x_offset, 1.2, 0.2) # Increased Y to 1.2
-	return masa.to_global(local_pos)
+	var local_pos = Vector3(x_offset, top_y, 0.2) 
+	return table.to_global(local_pos)
 
 func _animate_prop_flight(node, target_pos, slam: bool):
 	var tween = create_tween()
@@ -754,10 +821,38 @@ func evaluate_boss_item_usage():
 			play_boss_anim("use")
 			await get_tree().create_timer(0.5).timeout
 			await use_piston(threat)
+	elif boss_inventory.has("mirror"):
+		var swap = _find_best_mirror_swap()
+		if swap.size() == 2:
+			play_boss_anim("use")
+			await get_tree().create_timer(0.5).timeout
+			use_mirror(swap[0], swap[1])
 	elif boss_inventory.has("rope"):
 		play_boss_anim("use")
 		await get_tree().create_timer(0.5).timeout
 		await use_rope(true)
+
+func _find_best_mirror_swap() -> Array:
+	# Try to find a swap that wins or creates a strong position
+	for bx in range(grid_size):
+		for bz in range(grid_size):
+			if board[bx][bz] == 2: # Boss piece
+				for px in range(grid_size):
+					for pz in range(grid_size):
+						if board[px][pz] == 1: # Player piece
+							# Test swap
+							var c1 = Vector2i(bx, bz)
+							var c2 = Vector2i(px, pz)
+							board[bx][bz] = 1
+							board[px][pz] = 2
+							if check_win(c2, 2):
+								# Cleanup and return
+								board[bx][bz] = 2
+								board[px][pz] = 1
+								return [c1, c2]
+							board[bx][bz] = 2
+							board[px][pz] = 1
+	return []
 
 func _find_player_threat() -> Vector2i:
 	for x in range(grid_size):
@@ -873,18 +968,16 @@ func _ensure_item_collision(item: Node3D, type: String):
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
 	
-	# Use a static base size for the box, we will scale the StaticBody3D instead
-	var base_size = 1.0 if type == "piston" else 1.5 # Larger base size
-	box.size = Vector3.ONE * base_size
+	# Use a static base size for the box relative to the prop scale
+	# Piston is small (0.08), so its click area should be about 0.5 in world units
+	# If parent is 0.08, then 6.0 in local units is 0.48 in world units.
+	var local_size = 8.0 if type == "piston" else 5.0
+	box.size = Vector3.ONE * local_size
 	
 	col_shape.shape = box
 	static_body.add_child(col_shape)
 	
-	# Set initial scale compensation based on current item scale
-	if item.scale.x > 0:
-		static_body.scale = Vector3.ONE / item.scale.x
-	
-	static_body.position = Vector3(0, 0.5, 0) # Centered
+	static_body.position = Vector3(0, local_size/2, 0) # Centered on mesh
 	
 	# Force model nodes to ignore collision to avoid interference
 	_strip_collisions(item)

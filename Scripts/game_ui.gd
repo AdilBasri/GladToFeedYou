@@ -119,10 +119,13 @@ func show_ui(status: String):
 	match status:
 		"WIN":
 			status_label.text = "WINDOW OF OPPORTUNITY"
+			restart_button.text = "CONTINUE"
 		"LOSS":
 			status_label.text = "YOU WERE HARVESTED"
+			restart_button.text = "RETRY"
 		"DRAW":
 			status_label.text = "INFINITE LOOP"
+			restart_button.text = "RETRY"
 	
 	status_label.scale = Vector2.ZERO
 	var tween_s = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
