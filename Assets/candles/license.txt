@@ -1,0 +1,11 @@
+Model Information:
+* title:	Candles Asset Pack
+* source:	https://sketchfab.com/3d-models/candles-asset-pack-56a68205dae649a388c6e3ba04145a9e
+* author:	Em Marshall (https://sketchfab.com/emarshall)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Candles Asset Pack" (https://sketchfab.com/3d-models/candles-asset-pack-56a68205dae649a388c6e3ba04145a9e) by Em Marshall (https://sketchfab.com/emarshall) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

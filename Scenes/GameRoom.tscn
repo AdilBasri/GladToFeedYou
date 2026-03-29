@@ -1,4 +1,4 @@
-[gd_scene load_steps=31 format=3 uid="uid://b6rpy1dv6qa2k"]
+[gd_scene load_steps=41 format=3 uid="uid://b6rpy1dv6qa2k"]
 
 [ext_resource type="PackedScene" uid="uid://dr3me4koijp7l" path="res://Assets/throne_of_rock/scene.gltf" id="1_fkhyb"]
 [ext_resource type="PackedScene" uid="uid://bfss40nximqnm" path="res://Assets/Sitting.fbx" id="2_ln6b3"]
@@ -8,11 +8,20 @@
 [ext_resource type="PackedScene" uid="uid://noo8g50emnrl" path="res://Assets/el_tam.fbx" id="6_ln6b3"]
 [ext_resource type="PackedScene" uid="uid://kjye2pwxndar" path="res://Assets/black_rat__free_download/scene.gltf" id="7_3klrs"]
 [ext_resource type="PackedScene" uid="uid://b10waitm5uay1" path="res://Assets/mirror/scene.gltf" id="8_1oesn"]
+[ext_resource type="PackedScene" uid="uid://bpw0r2d11scmk" path="res://Assets/cage/scene.gltf" id="8_ilee1"]
 [ext_resource type="PackedScene" uid="uid://dq1b1ldv605w7" path="res://Assets/piston/scene.gltf" id="9_t82ed"]
 [ext_resource type="PackedScene" uid="uid://djov28rgbtmxa" path="res://Assets/rope/scene.gltf" id="10_6weqo"]
 [ext_resource type="Shader" uid="uid://cupjtsglvt6bt" path="res://Scenes/Shader.gdshader" id="11_t82ed"]
 [ext_resource type="PackedScene" uid="uid://c2csarj3ajjby" path="res://Assets/comp/scene.gltf" id="12_d0u7b"]
 [ext_resource type="PackedScene" uid="uid://bbh4rnitmfx57" path="res://Assets/comp3/scene.gltf" id="13_3dc5f"]
+[ext_resource type="PackedScene" uid="uid://ci0gmcovw8f3h" path="res://Assets/candles/scene.gltf" id="15_c2p1i"]
+[ext_resource type="PackedScene" uid="uid://daeik0psu8u7e" path="res://Assets/vent/scene.gltf" id="16_c2p1i"]
+[ext_resource type="Script" uid="uid://caouidttuxj1y" path="res://Scripts/env_animation.gd" id="16_env_anim"]
+[ext_resource type="Script" uid="uid://dqk80pys6v36v" path="res://Scripts/comp2_interaction.gd" id="17_comp2_anim"]
+[ext_resource type="Script" uid="uid://c7m1e002gsail" path="res://Scripts/candle_flicker.gd" id="18_candle_flicker"]
+[ext_resource type="PackedScene" uid="uid://u7edcxihxefk" path="res://Assets/cables/scene.gltf" id="20_al0g7"]
+[ext_resource type="PackedScene" uid="uid://cxdxtrnl4jxx8" path="res://Assets/trashw/scene.gltf" id="21_h415k"]
+[ext_resource type="PackedScene" uid="uid://binnfwp8k7a0s" path="res://Assets/floor/scene.gltf" id="22_26mxa"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_0og0i"]
 albedo_color = Color(0, 0, 0, 1)
@@ -7395,6 +7404,9 @@ shader_parameter/color_depth_bits = 5.0
 shader_parameter/dither_scale = 1.0
 shader_parameter/scanline_strength = 0.15
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_bp7nb"]
+size = Vector3(6.211792, 2.847168, 3.449707)
+
 [node name="GameRoom" type="Node3D"]
 
 [node name="DısDuvar" type="CSGBox3D" parent="."]
@@ -7979,6 +7991,51 @@ spot_attenuation = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7593107, -3.2782626, 4.15413)
 light_color = Color(0.15686275, 0.32941177, 0.60784316, 1)
 
+[node name="OmniLight3D2" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.672314, -3.5350983, 0.018303156)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+script = ExtResource("18_candle_flicker")
+
+[node name="OmniLight3D10" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1348505, 3.755538, 3.0333254)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+script = ExtResource("18_candle_flicker")
+
+[node name="OmniLight3D3" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.829261, -3.5350983, 0.018303156)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+script = ExtResource("18_candle_flicker")
+
+[node name="OmniLight3D4" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.7863154, -3.5350983, 0.1287066)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+script = ExtResource("18_candle_flicker")
+
+[node name="OmniLight3D5" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9438477, -3.5350983, 0.1287066)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+script = ExtResource("18_candle_flicker")
+
+[node name="OmniLight3D6" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.0375743, -3.5350983, 0.15583095)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+script = ExtResource("18_candle_flicker")
+
+[node name="OmniLight3D7" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9910884, -3.5350983, 0.048866987)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+script = ExtResource("18_candle_flicker")
+
+[node name="OmniLight3D8" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8340988, 1.5828116, -2.2433236)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+light_energy = 0.3
+
+[node name="OmniLight3D9" type="OmniLight3D" parent="WorldEnvironment"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.014697, 1.8178244, -2.2433236)
+light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
+light_energy = 0.3
+
 [node name="OyuncuMasa" type="CSGBox3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5019717, -3.477131, 4.408104)
 use_collision = true
@@ -8034,6 +8091,7 @@ mouse_filter = 2
 
 [node name="comp" parent="." instance=ExtResource("12_d0u7b")]
 transform = Transform3D(0.43412057, 0, 2.4620194, 0, 2.5, 0, -2.4620194, 0, 0.43412057, -4.230766, -2.1295543, 5.7734947)
+script = ExtResource("16_env_anim")
 
 [node name="Screen001" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="47"]
 transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.644, 0.8117628)
@@ -8251,9 +8309,61 @@ transform = Transform3D(0.10260605, 0, 0.2819078, 0, 0.3, 0, -0.2819078, 0, 0.10
 [node name="Cube" parent="comp2/Sketchfab_model/Root" index="71"]
 transform = Transform3D(0.54901, 0, 0, 0, 0.52286094, 0.16741677, 0, -0.16741677, 0.52286094, 1.12211, 4.83986, 3.12501)
 
+[node name="Area3D" type="Area3D" parent="comp2"]
+script = ExtResource("17_comp2_anim")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="comp2/Area3D"]
+transform = Transform3D(1, 0, 2.9802322e-08, 0, 0.99999976, 0, -2.9802322e-08, 0, 1, -0.3421564, 3.5893893, -3.7903867)
+shape = SubResource("BoxShape3D_bp7nb")
+
+[node name="vent" parent="." instance=ExtResource("16_c2p1i")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.58934, -3.5351, 0.0183032)
+script = ExtResource("16_env_anim")
+
+[node name="Cube_0" parent="vent/Sketchfab_model/Root/Cube" index="0"]
+blend_shapes/morph_0 = 0.80069
+
+[node name="candles" parent="." instance=ExtResource("15_c2p1i")]
+transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 8.718971, -3.9883974, -1.4040706)
+
+[node name="cage" parent="." instance=ExtResource("8_ilee1")]
+transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, 2.9052896, 1.0151119, -2.3068318)
+
+[node name="cage2" parent="." instance=ExtResource("8_ilee1")]
+transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, 4.6950107, -0.16983604, -2.3068318)
+
+[node name="cage3" parent="." instance=ExtResource("8_ilee1")]
+transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, -4.903317, -0.16983604, -2.3068318)
+
+[node name="cage4" parent="." instance=ExtResource("8_ilee1")]
+transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, -2.7719712, 1.6716766, -2.3068318)
+
+[node name="vent2" parent="." instance=ExtResource("16_c2p1i")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.959369, -0.40833986, 1.7391796)
+script = ExtResource("16_env_anim")
+
+[node name="cables" parent="." instance=ExtResource("20_al0g7")]
+transform = Transform3D(15, 0, 0, 0, 15, 0, 0, 0, 15, 6.530986, 4.0566244, 3.5697484)
+
+[node name="wall" parent="." instance=ExtResource("21_h415k")]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, -6.0639453, -4.0587797, -5.738714)
+
+[node name="wall2" parent="." instance=ExtResource("21_h415k")]
+transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 3.6845107, -4.0587797, -5.738714)
+
+[node name="wall3" parent="." instance=ExtResource("21_h415k")]
+transform = Transform3D(-2.1855695e-09, 0, 0.05, 0, 0.05, 0, -0.05, 0, -2.1855695e-09, 9.672943, -4.0587797, -5.738714)
+
+[node name="wall4" parent="." instance=ExtResource("21_h415k")]
+transform = Transform3D(-2.1855695e-09, 0, 0.05, 0, 0.05, 0, -0.05, 0, -2.1855695e-09, 9.672943, -4.0587797, 4.2027245)
+
+[node name="Sketchfab_Scene" parent="." instance=ExtResource("22_26mxa")]
+transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0.07692623, -3.9767394, -0.7476735)
+
 [editable path="Taht"]
 [editable path="Sitting"]
 [editable path="CharacterBody3D/Camera3D/el_tam"]
 [editable path="CharacterBody3D/Camera3D/mice"]
 [editable path="comp"]
 [editable path="comp2"]
+[editable path="vent"]

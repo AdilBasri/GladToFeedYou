@@ -1,0 +1,11 @@
+Model Information:
+* title:	The Bird Cage
+* source:	https://sketchfab.com/3d-models/the-bird-cage-1e1bec71da534e7bb72fdbfc08b354d1
+* author:	Pointveteran (https://sketchfab.com/Pointveteran)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "The Bird Cage" (https://sketchfab.com/3d-models/the-bird-cage-1e1bec71da534e7bb72fdbfc08b354d1) by Pointveteran (https://sketchfab.com/Pointveteran) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

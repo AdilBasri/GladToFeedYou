@@ -1,0 +1,11 @@
+Model Information:
+* title:	Outdoor Vent
+* source:	https://sketchfab.com/3d-models/outdoor-vent-7571072f296049a3bfd3a01237597b5b
+* author:	JanoschR (https://sketchfab.com/JanoschR)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Outdoor Vent" (https://sketchfab.com/3d-models/outdoor-vent-7571072f296049a3bfd3a01237597b5b) by JanoschR (https://sketchfab.com/JanoschR) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
