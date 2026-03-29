@@ -6,11 +6,16 @@ var quit_button: Button
 var overlay: ColorRect
 var perk_status_label: Label
 var info_label: Label
+var level_label: Label
+var current_level: int = 1
 
 func _ready():
 	# Create UI elements
 	setup_ui()
 	hide_ui()
+	
+	# Start Level 1
+	animate_level_start()
 	
 	# Connect to GridManager
 	var grid = get_tree().root.find_child("GridManager", true, false)
@@ -50,6 +55,14 @@ func setup_ui():
 	perk_status_label.add_theme_color_override("font_color", Color(0.8, 0, 0))
 	perk_status_label.add_theme_font_size_override("font_size", 24)
 	perk_container.add_child(perk_status_label)
+	
+	# Level Label (Persistent on screen)
+	level_label = Label.new()
+	level_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.8))
+	level_label.add_theme_font_size_override("font_size", 32)
+	add_child(level_label)
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level_label.modulate.a = 0
 	
 	# Top Info Label (Top Center)
 	var info_container = CenterContainer.new()
@@ -176,7 +189,43 @@ func show_info_message(msg: String, duration: float = 2.5):
 	var fade_final = create_tween()
 	fade_final.tween_property(info_label, "modulate:a", 0.0, 0.5)
 
+func animate_level_start():
+	if not level_label: return
+	
+	var viewport_size = get_viewport().get_visible_rect().size
+	level_label.text = "LEVEL " + str(current_level)
+	level_label.add_theme_font_size_override("font_size", 90)
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level_label.modulate.a = 0
+	level_label.scale = Vector2(0.3, 0.3)
+	
+	# Initial centering
+	level_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	# Wait for size update (optional but safer)
+	await get_tree().process_frame 
+	level_label.pivot_offset = level_label.size / 2.0
+	
+	var tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(level_label, "modulate:a", 1.0, 0.8)
+	tween.tween_property(level_label, "scale", Vector2.ONE, 0.8)
+	
+	await get_tree().create_timer(1.8).timeout
+	
+	# Move and align to bottom-left HUD
+	var move_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_IN_OUT)
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	
+	var hud_y = viewport_size.y - 80
+	move_tween.tween_property(level_label, "global_position", Vector2(30, hud_y), 1.2)
+	move_tween.tween_property(level_label, "scale", Vector2(0.4, 0.4), 1.2)
+	move_tween.tween_property(level_label, "modulate:a", 0.6, 1.2)
+
 func _on_game_ended(status: String):
+	if status == "WIN":
+		current_level += 1
+	elif status == "LOSS":
+		current_level = 1
+		
 	# Show after a short delay (for Boss LookAt and animations)
 	await get_tree().create_timer(1.2).timeout
 	show_ui(status)
@@ -186,6 +235,9 @@ func _on_restart_pressed():
 	var grid = get_tree().root.find_child("GridManager", true, false)
 	if grid:
 		grid.restart_game()
+	
+	# Start new level sequence
+	animate_level_start()
 
 func _on_quit_pressed():
 	get_tree().quit()

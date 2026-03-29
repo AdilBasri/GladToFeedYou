@@ -30,6 +30,9 @@ var hover_indicator: MeshInstance3D
 var active_item: String = "" # "piston", "rope", "mirror"
 var mirror_source_coord: Vector2i = Vector2i(-1, -1)
 var ui_layer: CanvasLayer
+var audio_streams = {}
+var bg_music: AudioStreamPlayer
+var looping_sfx_node: AudioStreamPlayer = null
 
 
 @export var refresh_and_create: bool = false : set = set_create
@@ -100,6 +103,26 @@ func _ready():
 		reset_board()
 
 		setup_boss_animation()
+		
+		# Audio Setup
+		bg_music = AudioStreamPlayer.new()
+		var bg_stream = load("res://Assets/Music/background.mp3")
+		if bg_stream:
+			bg_stream.loop = true
+			bg_music.stream = bg_stream
+			bg_music.autoplay = true
+			add_child(bg_music)
+		
+		var sfx_files = {
+			"player_placement": "res://Assets/Music/player_placement.mp3",
+			"devil_placement": "res://Assets/Music/devil_placement.mp3",
+			"dice": "res://Assets/Music/dice1.mp3",
+			"use": "res://Assets/Music/use.mp3",
+			"laugh": "res://Assets/Music/devil_laugh.mp3",
+			"rope": "res://Assets/Music/rope.mp3"
+		}
+		for s_name in sfx_files:
+			audio_streams[s_name] = load(sfx_files[s_name])
 		
 		ui_layer = CanvasLayer.new()
 		ui_layer.set_script(load("res://Scripts/game_ui.gd"))
@@ -384,6 +407,7 @@ func perform_raycast(is_click: bool = false):
 						active_item = type # Select
 						node.scale = Vector3.ONE * target_scale * 1.5 # Relative scale up
 						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SELECTED" + ("! (BIND THE DEMON!)" if type == "rope" else ""))
+						play_sfx("use")
 					return
 		
 		# Boss tıklama (Layer 8)
@@ -530,6 +554,7 @@ func use_piston(coords: Vector2i):
 
 func use_rope(from_boss: bool):
 	if active_rope_node: _clear_rope_visual()
+	play_sfx("rope")
 	
 	var node = item_nodes.get("rope")
 	var target_pos: Vector3
@@ -656,6 +681,7 @@ func _find_mesh_recursive(node: Node) -> Node:
 
 func trigger_gamble():
 	play_boss_anim("dice")
+	play_sfx("dice")
 	if ui_layer: ui_layer.show_info_message("DICE ROLLED...")
 	
 	# Fiziksel zarları fırlat
@@ -684,6 +710,7 @@ func trigger_gamble():
 		return true # Player gets another turn / keeps turn
 	elif total > 7: 
 		if ui_layer: ui_layer.show_info_message("Luck is on the demon's side! DEMON MOVES!")
+		play_sfx("laugh")
 		await get_tree().create_timer(1.0).timeout
 		give_random_item("boss")
 		return false # Transition to boss
@@ -877,8 +904,10 @@ func place_piece(coords: Vector2i, type: int):
 	
 	if type == 1: # Stone (Oyuncu)
 		piece.position = Vector3(coords.x * cell_size - offset, 0.05, coords.y * cell_size - offset)
+		play_sfx("player_placement")
 	else: # Finger (Boss) - Now using black stone
 		piece.position = Vector3(coords.x * cell_size - offset, 0.05, coords.y * cell_size - offset)
+		play_sfx("devil_placement")
 		
 	add_child(piece)
 	board_visuals[coords] = piece
@@ -1030,13 +1059,37 @@ func end_game(status: String):
 	if status == "LOSS":
 		play_boss_anim("win")
 		boss_won_lookat.emit()
+		play_sfx("laugh", true)
 		await get_tree().create_timer(1.0).timeout
 	elif status == "WIN":
 		play_boss_anim("lose")
 		
 	game_ended.emit(status)
 
+func play_sfx(s_name: String, loop: bool = false):
+	if audio_streams.has(s_name) and audio_streams[s_name]:
+		var stream = audio_streams[s_name]
+		if loop:
+			stream.loop = true
+			if looping_sfx_node: looping_sfx_node.queue_free()
+			looping_sfx_node = AudioStreamPlayer.new()
+			add_child(looping_sfx_node)
+			looping_sfx_node.stream = stream
+			looping_sfx_node.play()
+		else:
+			stream.loop = false
+			var p = AudioStreamPlayer.new()
+			add_child(p)
+			p.stream = stream
+			p.play()
+			p.finished.connect(p.queue_free)
+
 func restart_game():
+	if looping_sfx_node:
+		looping_sfx_node.stop()
+		looping_sfx_node.queue_free()
+		looping_sfx_node = null
+		
 	game_over = false
 	var camera = get_viewport().get_camera_3d()
 	if camera and camera.has_method("reset_rotation"):
