@@ -9,6 +9,8 @@ var info_label: Label
 var level_label: Label
 var current_level: int = 1
 
+var start_hint: Label
+
 func _ready():
 	# Create UI elements
 	setup_ui()
@@ -21,6 +23,17 @@ func _ready():
 	var grid = get_tree().root.find_child("GridManager", true, false)
 	if grid:
 		grid.game_ended.connect(_on_game_ended)
+
+func _input(event):
+	# On Web/itch.io, we need a click to capture the mouse
+	if event is InputEventMouseButton and event.pressed:
+		print("Mouse Click Detected. Mode: ", Input.mouse_mode)
+		# Only capture if the overlay (Win/Loss menu) is not showing
+		if overlay and not overlay.visible:
+			if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+				if start_hint:
+					start_hint.visible = false
 
 func setup_ui():
 	# Add Crosshair
@@ -123,6 +136,20 @@ func setup_ui():
 	quit_button.flat = true
 	quit_button.pressed.connect(_on_quit_pressed)
 	container.add_child(quit_button)
+
+	# Start Hint (Web/Initial Capture)
+	start_hint = Label.new()
+	start_hint.text = "CLICK TO CAPTURE MOUSE"
+	start_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	start_hint.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	start_hint.add_theme_font_size_override("font_size", 40)
+	start_hint.add_theme_color_override("font_color", Color(1, 1, 0)) # Yellow
+	add_child(start_hint)
+	
+	# Pulsing animation for start hint
+	var hint_tween = create_tween().set_loops()
+	hint_tween.tween_property(start_hint, "modulate:a", 0.3, 0.8)
+	hint_tween.tween_property(start_hint, "modulate:a", 1.0, 0.8)
 
 func show_ui(status: String):
 	overlay.visible = true

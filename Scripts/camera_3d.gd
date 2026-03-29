@@ -103,6 +103,10 @@ func _apply_no_depth_recursive(node: Node, priority: int):
 func _input(event):
 	if is_locked: return
 	if event is InputEventMouseMotion:
+		# Only rotate if the mouse is captured (Fixes browser/itch.io mouse fight)
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			return
+			
 		# Convert mouse motion to rotation
 		yaw -= event.relative.x * sensitivity
 		pitch -= event.relative.y * sensitivity

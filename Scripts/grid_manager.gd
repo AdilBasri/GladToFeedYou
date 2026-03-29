@@ -368,6 +368,10 @@ func animate_boss_lights(delta):
 func _input(event):
 	if Engine.is_editor_hint(): return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# Don't place anything if the mouse is not yet captured (Browser support)
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			return
+			
 		perform_raycast(true)
 
 func perform_raycast(is_click: bool = false):
