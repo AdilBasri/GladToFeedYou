@@ -29,9 +29,15 @@ project/assembly_name="GladToFeedYou"
 
 [rendering]
 
+occlusion_culling/bvh_build_quality=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+lights_and_shadows/directional_shadow/size=512
+environment/ssao/quality=1
+environment/ssil/quality=1
 viewport/hdr_2d=true
-anti_aliasing/quality/msaa_3d=2
+environment/glow/upscale_mode=0
+environment/volumetric_fog/use_filter=0
+lights_and_shadows/positional_shadow/atlas_size=512
 tonemapper/mode=2

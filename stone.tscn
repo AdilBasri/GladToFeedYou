@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://c8o0vwmcpfo4l"]
-
-[ext_resource type="PackedScene" uid="uid://dt6uie208l2gv" path="res://Assets/stone/scene.gltf" id="1_6s6ed"]
-
-[node name="Sketchfab_Scene" instance=ExtResource("1_6s6ed")]
-transform = Transform3D(0.003, 0, 0, 0, 0.003, 0, 0, 0, 0.003, 0, -2.113, 2.149)

@@ -1,10 +1,13 @@
-[gd_scene load_steps=41 format=3 uid="uid://b6rpy1dv6qa2k"]
+[gd_scene load_steps=44 format=3 uid="uid://b6rpy1dv6qa2k"]
 
 [ext_resource type="PackedScene" uid="uid://dr3me4koijp7l" path="res://Assets/throne_of_rock/scene.gltf" id="1_fkhyb"]
 [ext_resource type="PackedScene" uid="uid://bfss40nximqnm" path="res://Assets/Sitting.fbx" id="2_ln6b3"]
 [ext_resource type="PackedScene" uid="uid://bxh3ucsjralsi" path="res://Assets/skull.glb" id="3_3klrs"]
+[ext_resource type="Animation" uid="uid://cl3wjav1ntt2q" path="res://lose.res" id="4_2qkyt"]
 [ext_resource type="Script" uid="uid://cak2ptskmr6b5" path="res://Scripts/grid_manager.gd" id="4_d3w75"]
 [ext_resource type="Script" uid="uid://c3t272ix4kfrs" path="res://Scripts/camera_3d.gd" id="5_pofol"]
+[ext_resource type="Animation" uid="uid://cjrgneovqx7" path="res://use.res" id="5_se1pu"]
+[ext_resource type="Animation" uid="uid://bq4ve0rpeyt56" path="res://win.res" id="6_feap3"]
 [ext_resource type="PackedScene" uid="uid://noo8g50emnrl" path="res://Assets/el_tam.fbx" id="6_ln6b3"]
 [ext_resource type="PackedScene" uid="uid://kjye2pwxndar" path="res://Assets/black_rat__free_download/scene.gltf" id="7_3klrs"]
 [ext_resource type="PackedScene" uid="uid://b10waitm5uay1" path="res://Assets/mirror/scene.gltf" id="8_1oesn"]
@@ -403,7 +406,10 @@ tracks/52/keys = PackedFloat32Array(0, 1, 0.10910757, 7.997865e-06, 0.025549196,
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_t82ed"]
 _data = {
-&"mixamo_com": SubResource("Animation_1oesn")
+&"idle": SubResource("Animation_1oesn"),
+&"lose": ExtResource("4_2qkyt"),
+&"use": ExtResource("5_se1pu"),
+&"win": ExtResource("6_feap3")
 }
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6weqo"]
@@ -7592,7 +7598,7 @@ transform = Transform3D(-0.31913996, 0.007965154, -0.18036273, 0.0059254672, 0.3
 libraries = {
 &"": SubResource("AnimationLibrary_t82ed")
 }
-autoplay = "mixamo_com"
+autoplay = "idle"
 
 [node name="GridManager" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3451796, 2.389616)
@@ -7643,10 +7649,7 @@ bones/5/rotation = Quaternion(0.079679325, -0.00014768448, -0.0070206593, 0.9967
 bones/5/scale = Vector3(0.8759904, 0.87599057, 0.87599045)
 bones/6/rotation = Quaternion(0.1678023, -0.0023142472, 0.013718044, 0.9857225)
 bones/6/scale = Vector3(1, 0.8657213, 1)
-bones/8/rotation = Quaternion(0.042362913, 0.0008726135, -0.010652444, 0.9990452)
-bones/8/scale = Vector3(0.9977262, 0.87256795, 0.9944171)
-bones/10/position = Vector3(0.00037226774, 0.029932896, 0.0014753027)
-bones/10/rotation = Quaternion(0.15310258, -0.0058698044, -0.0037155142, 0.98818594)
+
 bones/10/scale = Vector3(0.98451424, 0.89468896, 0.98276657)
 bones/11/position = Vector3(0.019690376, 0.011876813, 0.023221299)
 bones/11/rotation = Quaternion(-0.044235054, -0.04129698, -0.7205543, 0.6907528)
@@ -8363,7 +8366,7 @@ transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0.07692623, -4.07770
 [editable path="Taht"]
 [editable path="Sitting"]
 [editable path="CharacterBody3D/Camera3D/el_tam"]
-[editable path="CharacterBody3D/Camera3D/mice"]
 [editable path="comp"]
 [editable path="comp2"]
 [editable path="vent"]
+[editable path="CharacterBody3D/Camera3D/mice"]

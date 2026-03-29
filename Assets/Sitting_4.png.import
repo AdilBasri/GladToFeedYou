@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://b6klj64rm5eku"
-path="res://.godot/imported/Sitting_4.png-a37d8db2b6097332acca07600eef0e2c.ctex"
+path.s3tc="res://.godot/imported/Sitting_4.png-a37d8db2b6097332acca07600eef0e2c.s3tc.ctex"
+path.etc2="res://.godot/imported/Sitting_4.png-a37d8db2b6097332acca07600eef0e2c.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "8ec929e68b4eedfcd2b45afd9ee534ad"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://Assets/Sitting_4.png"
-dest_files=["res://.godot/imported/Sitting_4.png-a37d8db2b6097332acca07600eef0e2c.ctex"]
+dest_files=["res://.godot/imported/Sitting_4.png-a37d8db2b6097332acca07600eef0e2c.s3tc.ctex", "res://.godot/imported/Sitting_4.png-a37d8db2b6097332acca07600eef0e2c.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0

@@ -3,9 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dprthmmwfjo2t"
-path="res://.godot/imported/Sitting Disbelief_2.png-9bf084b868ac873abf26d05ab23d8ff2.ctex"
+path.s3tc="res://.godot/imported/Sitting Disbelief_2.png-9bf084b868ac873abf26d05ab23d8ff2.s3tc.ctex"
+path.etc2="res://.godot/imported/Sitting Disbelief_2.png-9bf084b868ac873abf26d05ab23d8ff2.etc2.ctex"
 metadata={
-"vram_texture": false
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"vram_texture": true
 }
 generator_parameters={
 "md5": "cc54f89ab2f803775b259523df174726"
@@ -14,11 +16,11 @@ generator_parameters={
 [deps]
 
 source_file="res://Assets/Sitting Disbelief_2.png"
-dest_files=["res://.godot/imported/Sitting Disbelief_2.png-9bf084b868ac873abf26d05ab23d8ff2.ctex"]
+dest_files=["res://.godot/imported/Sitting Disbelief_2.png-9bf084b868ac873abf26d05ab23d8ff2.s3tc.ctex", "res://.godot/imported/Sitting Disbelief_2.png-9bf084b868ac873abf26d05ab23d8ff2.etc2.ctex"]
 
 [params]
 
-compress/mode=0
+compress/mode=2
 compress/high_quality=false
 compress/lossy_quality=0.7
 compress/uastc_level=0
