@@ -1,0 +1,11 @@
+Model Information:
+* title:	Baphomet Head
+* source:	https://sketchfab.com/3d-models/baphomet-head-73410032baca4cf5949a01890a354c2c
+* author:	Toymancer Studio (https://sketchfab.com/toymancer)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Baphomet Head" (https://sketchfab.com/3d-models/baphomet-head-73410032baca4cf5949a01890a354c2c) by Toymancer Studio (https://sketchfab.com/toymancer) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

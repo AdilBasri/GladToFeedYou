@@ -1,10 +1,12 @@
-[gd_scene load_steps=44 format=3 uid="uid://b6rpy1dv6qa2k"]
+[gd_scene format=3 uid="uid://b6rpy1dv6qa2k"]
 
 [ext_resource type="PackedScene" uid="uid://dr3me4koijp7l" path="res://Assets/throne_of_rock/scene.gltf" id="1_fkhyb"]
 [ext_resource type="PackedScene" uid="uid://bfss40nximqnm" path="res://Assets/Sitting.fbx" id="2_ln6b3"]
 [ext_resource type="PackedScene" uid="uid://bxh3ucsjralsi" path="res://Assets/skull.glb" id="3_3klrs"]
 [ext_resource type="Animation" uid="uid://cl3wjav1ntt2q" path="res://lose.res" id="4_2qkyt"]
 [ext_resource type="Script" uid="uid://cak2ptskmr6b5" path="res://Scripts/grid_manager.gd" id="4_d3w75"]
+[ext_resource type="PackedScene" uid="uid://sdr10sjgfs52" path="res://Assets/baphomet_head/scene.gltf" id="4_se1pu"]
+[ext_resource type="PackedScene" uid="uid://buoq8nd02kxag" path="res://Assets/dragon_head/scene.gltf" id="5_feap3"]
 [ext_resource type="Script" uid="uid://c3t272ix4kfrs" path="res://Scripts/camera_3d.gd" id="5_pofol"]
 [ext_resource type="Animation" uid="uid://cjrgneovqx7" path="res://use.res" id="5_se1pu"]
 [ext_resource type="Animation" uid="uid://bq4ve0rpeyt56" path="res://win.res" id="6_feap3"]
@@ -7413,23 +7415,23 @@ shader_parameter/scanline_strength = 0.15
 [sub_resource type="BoxShape3D" id="BoxShape3D_bp7nb"]
 size = Vector3(6.211792, 2.847168, 3.449707)
 
-[node name="GameRoom" type="Node3D"]
+[node name="GameRoom" type="Node3D" unique_id=1903851720]
 
-[node name="DısDuvar" type="CSGBox3D" parent="."]
+[node name="DısDuvar" type="CSGBox3D" parent="." unique_id=561078618]
 use_collision = true
 collision_layer = 255
 collision_mask = 255
 size = Vector3(20, 10, 20)
 material = SubResource("StandardMaterial3D_0og0i")
 
-[node name="IcDuvar" type="CSGBox3D" parent="DısDuvar"]
+[node name="IcDuvar" type="CSGBox3D" parent="DısDuvar" unique_id=1697994830]
 operation = 2
 size = Vector3(19, 8, 19)
 
-[node name="Taht" parent="." instance=ExtResource("1_fkhyb")]
+[node name="Taht" parent="." unique_id=50968645 instance=ExtResource("1_fkhyb")]
 transform = Transform3D(0.02, 0, 0, 0, 0.02, 0, 0, 0, 0.02, -0.005080819, -3.996665, -4.818597)
 
-[node name="Sitting" parent="." instance=ExtResource("2_ln6b3")]
+[node name="Sitting" parent="." unique_id=988526025 instance=ExtResource("2_ln6b3")]
 transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, -0.024756312, -3.999678, -4.288146)
 
 [node name="Skeleton3D" parent="Sitting" index="0"]
@@ -7586,50 +7588,57 @@ bones/63/position = Vector3(3.2577536e-09, 0.18261857, 5.4904365e-09)
 bones/63/rotation = Quaternion(0.25904453, 0.06181507, -0.01652409, 0.9637437)
 bones/63/scale = Vector3(0.99999976, 1.0000006, 0.99999964)
 
-[node name="BoneAttachment3D" type="BoneAttachment3D" parent="Sitting/Skeleton3D" index="1"]
+[node name="BoneAttachment3D" type="BoneAttachment3D" parent="Sitting/Skeleton3D" index="1" unique_id=459269626]
 transform = Transform3D(0.99929345, -0.021884121, 0.030555103, 0.021723155, 0.99974835, 0.0055904686, -0.030669753, -0.004922718, 0.99951744, 0.011085431, 1.1011902, 0.07430266)
 bone_name = "mixamorig_Head"
 bone_idx = 5
 
-[node name="skull" parent="Sitting/Skeleton3D/BoneAttachment3D" instance=ExtResource("3_3klrs")]
+[node name="chick" parent="Sitting/Skeleton3D/BoneAttachment3D" unique_id=666611755 instance=ExtResource("3_3klrs")]
 transform = Transform3D(-0.31913996, 0.007965154, -0.18036273, 0.0059254672, 0.36657444, 0.0057038954, 0.18044123, 0.002049821, -0.31918836, 0.11087642, -0.16761523, 0.019929528)
+visible = false
+
+[node name="goat" parent="Sitting/Skeleton3D/BoneAttachment3D" unique_id=2087543059 instance=ExtResource("4_se1pu")]
+transform = Transform3D(0.33309788, 0.007241049, -0.010223253, -0.007294711, 0.33324948, -0.0016409219, 0.01018503, 0.0018634736, 0.33317244, -0.01141284, 0.046582967, 0.048821807)
+visible = false
+
+[node name="dragon" parent="Sitting/Skeleton3D/BoneAttachment3D" unique_id=374591521 instance=ExtResource("5_feap3")]
+transform = Transform3D(-0.099929355, 0.0012450187, 0.0035461439, 0.0021884122, 0.095983915, 0.027969705, -0.003055494, 0.028027544, -0.0959433, -0.01001822, 0.12832472, 0.16156745)
+visible = false
 
 [node name="AnimationPlayer" parent="Sitting" index="1"]
-libraries = {
-&"": SubResource("AnimationLibrary_t82ed")
-}
-autoplay = "idle"
+libraries/ = SubResource("AnimationLibrary_t82ed")
+autoplay = &"idle"
 
-[node name="GridManager" type="Node3D" parent="."]
+[node name="GridManager" type="Node3D" parent="." unique_id=291269782]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.3451796, 2.389616)
 script = ExtResource("4_d3w75")
 cell_size = 0.5
 table_scene = null
 
-[node name="GridBase" type="MeshInstance3D" parent="GridManager"]
+[node name="GridBase" type="MeshInstance3D" parent="GridManager" unique_id=333272229]
 material_override = SubResource("StandardMaterial3D_6weqo")
 mesh = SubResource("BoxMesh_d0u7b")
 
-[node name="GridMultiMesh" type="MultiMeshInstance3D" parent="GridManager"]
+[node name="GridMultiMesh" type="MultiMeshInstance3D" parent="GridManager" unique_id=342309492]
 material_override = SubResource("StandardMaterial3D_3dc5f")
 multimesh = SubResource("MultiMesh_c2p1i")
 
-[node name="CSGBox3D" type="CSGBox3D" parent="GridManager"]
+[node name="CSGBox3D" type="CSGBox3D" parent="GridManager" unique_id=710725810]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8442259, 0)
 size = Vector3(1, 1.6513672, 1)
 material = SubResource("StandardMaterial3D_d0u7b")
 
-[node name="CharacterBody3D" type="CharacterBody3D" parent="."]
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=1211203840]
 transform = Transform3D(-1.2720168, 0, 0.7949676, 0, 1.5, 0, -0.7949676, 0, -1.2720168, 0.09287512, -2.1600106, 6.1194386)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D" unique_id=1870158705]
 shape = SubResource("CapsuleShape3D_a81pq")
 
-[node name="Camera3D" type="Camera3D" parent="CharacterBody3D"]
+[node name="Camera3D" type="Camera3D" parent="CharacterBody3D" unique_id=1488672559]
 transform = Transform3D(-0.57261616, 0, -0.34140188, 0, 0.6666667, 0, 0.34140188, 0, -0.57261616, 0, 0.6662113, 0)
 script = ExtResource("5_pofol")
 
-[node name="el_tam" parent="CharacterBody3D/Camera3D" instance=ExtResource("6_ln6b3")]
+[node name="el_tam" parent="CharacterBody3D/Camera3D" unique_id=928412694 instance=ExtResource("6_ln6b3")]
 transform = Transform3D(-0.028482076, 0.3589227, 0.6003027, -0.46993324, 0.435163, -0.28248173, -0.5180266, -0.4144969, 0.22325054, -0.79226756, -1.3266945, -2.3511465)
 
 [node name="Camera" parent="CharacterBody3D/Camera3D/el_tam" index="0"]
@@ -7638,7 +7647,7 @@ visible = false
 [node name="Light" parent="CharacterBody3D/Camera3D/el_tam" index="1"]
 visible = false
 
-[node name="mice" parent="CharacterBody3D/Camera3D" instance=ExtResource("7_3klrs")]
+[node name="mice" parent="CharacterBody3D/Camera3D" unique_id=220636965 instance=ExtResource("7_3klrs")]
 transform = Transform3D(0.41990793, 0, 0.008795791, 0, 0.42000002, 0, -0.008795791, 0, 0.41990793, -0.76388943, -1.4166126, -2.5605025)
 
 [node name="Skeleton3D" parent="CharacterBody3D/Camera3D/mice/Sketchfab_model/blackrat_fbx/Object_2/RootNode/Mammals/Object_5" index="0"]
@@ -7649,7 +7658,6 @@ bones/5/rotation = Quaternion(0.079679325, -0.00014768448, -0.0070206593, 0.9967
 bones/5/scale = Vector3(0.8759904, 0.87599057, 0.87599045)
 bones/6/rotation = Quaternion(0.1678023, -0.0023142472, 0.013718044, 0.9857225)
 bones/6/scale = Vector3(1, 0.8657213, 1)
-
 bones/10/scale = Vector3(0.98451424, 0.89468896, 0.98276657)
 bones/11/position = Vector3(0.019690376, 0.011876813, 0.023221299)
 bones/11/rotation = Quaternion(-0.044235054, -0.04129698, -0.7205543, 0.6907528)
@@ -7964,15 +7972,13 @@ bones/358/rotation = Quaternion(-0.019823033, -0.033120412, -0.03785097, 0.99853
 bones/358/scale = Vector3(0.99204874, 0.5569202, 0.9849736)
 
 [node name="AnimationPlayer" parent="CharacterBody3D/Camera3D/mice" index="1"]
-libraries = {
-&"": SubResource("AnimationLibrary_6weqo")
-}
-autoplay = "Mammals|idle_A1"
+libraries/ = SubResource("AnimationLibrary_6weqo")
+autoplay = &"Mammals|idle_A1"
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1446408758]
 environment = SubResource("Environment_a81pq")
 
-[node name="SpotLight3D" type="SpotLight3D" parent="WorldEnvironment"]
+[node name="SpotLight3D" type="SpotLight3D" parent="WorldEnvironment" unique_id=892864811]
 transform = Transform3D(1, 0, 0, 0, 0.021780036, 0.9997628, 0, -0.9997628, 0.021780036, 0, 1.7295415, 2.7038229)
 light_color = Color(1, 0.19215687, 0.11764706, 1)
 light_energy = 15.0
@@ -7981,8 +7987,8 @@ light_volumetric_fog_energy = 16.0
 spot_range = 7.0
 spot_attenuation = 0.5
 
-[node name="SpotLight3D2" type="SpotLight3D" parent="WorldEnvironment"]
-transform = Transform3D(1, 0, 0, 0, -0.7603039, 0.64956754, 0, -0.64956754, -0.7603039, 0, 1.5548247, -8.220295)
+[node name="SpotLight3D2" type="SpotLight3D" parent="WorldEnvironment" unique_id=1817982638]
+transform = Transform3D(1, 0, 0, 0, -0.7603039, 0.64956754, 0, -0.64956754, -0.7603039, 0, 1.5548247, -6.0779433)
 light_color = Color(1, 0.19215687, 0.11764706, 1)
 light_energy = 15.0
 light_indirect_energy = 5.0
@@ -7990,100 +7996,100 @@ light_volumetric_fog_energy = 16.0
 spot_range = 7.0
 spot_attenuation = 0.5
 
-[node name="OmniLight3D" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D" type="OmniLight3D" parent="WorldEnvironment" unique_id=1971763646]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7593107, -3.2782626, 4.15413)
 light_color = Color(0.15686275, 0.32941177, 0.60784316, 1)
 
-[node name="OmniLight3D2" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D2" type="OmniLight3D" parent="WorldEnvironment" unique_id=926211836]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.672314, -3.5350983, 0.018303156)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 script = ExtResource("18_candle_flicker")
 
-[node name="OmniLight3D10" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D10" type="OmniLight3D" parent="WorldEnvironment" unique_id=830823993]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1348505, 3.755538, 3.0333254)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 script = ExtResource("18_candle_flicker")
 
-[node name="OmniLight3D3" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D3" type="OmniLight3D" parent="WorldEnvironment" unique_id=1902580700]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.829261, -3.5350983, 0.018303156)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 script = ExtResource("18_candle_flicker")
 
-[node name="OmniLight3D4" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D4" type="OmniLight3D" parent="WorldEnvironment" unique_id=2107974508]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.7863154, -3.5350983, 0.1287066)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 script = ExtResource("18_candle_flicker")
 
-[node name="OmniLight3D5" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D5" type="OmniLight3D" parent="WorldEnvironment" unique_id=1010264958]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9438477, -3.5350983, 0.1287066)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 script = ExtResource("18_candle_flicker")
 
-[node name="OmniLight3D6" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D6" type="OmniLight3D" parent="WorldEnvironment" unique_id=1107801039]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.0375743, -3.5350983, 0.15583095)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 script = ExtResource("18_candle_flicker")
 
-[node name="OmniLight3D7" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D7" type="OmniLight3D" parent="WorldEnvironment" unique_id=1793845806]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.9910884, -3.5350983, 0.048866987)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 script = ExtResource("18_candle_flicker")
 
-[node name="OmniLight3D8" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D8" type="OmniLight3D" parent="WorldEnvironment" unique_id=1889784089]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.8340988, 1.5828116, -2.2433236)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 light_energy = 0.3
 
-[node name="OmniLight3D9" type="OmniLight3D" parent="WorldEnvironment"]
+[node name="OmniLight3D9" type="OmniLight3D" parent="WorldEnvironment" unique_id=1040614338]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.014697, 1.8178244, -2.2433236)
 light_color = Color(0.6392157, 0.3529412, 0.16862746, 1)
 light_energy = 0.3
 
-[node name="PlayerTable" type="CSGBox3D" parent="."]
+[node name="PlayerTable" type="CSGBox3D" parent="." unique_id=1657436309]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5019717, -3.477131, 4.408104)
 use_collision = true
 collision_layer = 255
 size = Vector3(1.8896484, 1.3164063, 3.0438385)
 material = SubResource("StandardMaterial3D_3klrs")
 
-[node name="mirror" parent="PlayerTable" instance=ExtResource("8_1oesn")]
-transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -0.04082775, 0.893728, 1.0655627)
+[node name="mirror" parent="PlayerTable" unique_id=366724234 instance=ExtResource("8_1oesn")]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, -0.04082775, 1.7458616, -0.7258954)
 visible = false
 
-[node name="piston" parent="PlayerTable" instance=ExtResource("9_t82ed")]
-transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, -0.07650995, 2.0819535, 0.13139391)
+[node name="piston" parent="PlayerTable" unique_id=1625137468 instance=ExtResource("9_t82ed")]
+transform = Transform3D(0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, -0.07650995, 2.4974802, 0.13139391)
 visible = false
 
-[node name="rope" parent="PlayerTable" instance=ExtResource("10_6weqo")]
-transform = Transform3D(0.2, 0, 0, 0, 0.0029459994, 0.1999783, 0, -0.1999783, 0.0029459994, -0.18564224, 1.7003945, -1.1133902)
+[node name="rope" parent="PlayerTable" unique_id=1955057251 instance=ExtResource("10_6weqo")]
+transform = Transform3D(0.2, 0, 0, 0, 0.0029459994, 0.1999783, 0, -0.1999783, 0.0029459994, -0.18564224, 2.432331, -1.1133902)
 visible = false
 
-[node name="BossTable" type="CSGBox3D" parent="."]
+[node name="BossTable" type="CSGBox3D" parent="." unique_id=187663981]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.494056, -3.477131, -0.6280819)
 use_collision = true
 collision_layer = 255
 size = Vector3(1.8896484, 1.3164063, 3.0438385)
 material = SubResource("StandardMaterial3D_3klrs")
 
-[node name="prop1" type="Marker3D" parent="BossTable"]
+[node name="prop1" type="Marker3D" parent="BossTable" unique_id=2021240352]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0010672, 0.80881596)
 
-[node name="prop2" type="Marker3D" parent="BossTable"]
+[node name="prop2" type="Marker3D" parent="BossTable" unique_id=860433353]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0057526, 0.0367285)
 
-[node name="prop3" type="Marker3D" parent="BossTable"]
+[node name="prop3" type="Marker3D" parent="BossTable" unique_id=2123194124]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.0024595, -0.8073103)
 
-[node name="Props" type="CSGBox3D" parent="."]
+[node name="Props" type="CSGBox3D" parent="." unique_id=1566119029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.494056, -3.477131, 4.3867393)
 use_collision = true
 collision_layer = 255
 size = Vector3(1.8896484, 1.3164063, 4.8160744)
 material = SubResource("StandardMaterial3D_3klrs")
 
-[node name="PostProcessing" type="CanvasLayer" parent="."]
+[node name="PostProcessing" type="CanvasLayer" parent="." unique_id=1168641307]
 
-[node name="ShaderRect" type="ColorRect" parent="PostProcessing"]
+[node name="ShaderRect" type="ColorRect" parent="PostProcessing" unique_id=1974355137]
 material = SubResource("ShaderMaterial_6weqo")
 anchors_preset = 15
 anchor_right = 1.0
@@ -8092,7 +8098,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="comp" parent="." instance=ExtResource("12_d0u7b")]
+[node name="comp" parent="." unique_id=1414480705 instance=ExtResource("12_d0u7b")]
 transform = Transform3D(0.43412057, 0, 2.4620194, 0, 2.5, 0, -2.4620194, 0, 0.43412057, -4.230766, -2.1295543, 5.7734947)
 script = ExtResource("16_env_anim")
 
@@ -8306,67 +8312,71 @@ transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.8551
 [node name="Screen141" parent="comp/Sketchfab_model/4cef7c9d510940d8bf5a9a57aa408b42_fbx/Object_2/RootNode" index="241"]
 transform = Transform3D(0.923215, 0, 0, 0, -1.01937665e-07, -0.855115, 0, 0.855115, -1.01937665e-07, 5.6578007, 1.6434681, 0.8117628)
 
-[node name="comp2" parent="." instance=ExtResource("13_3dc5f")]
+[node name="comp2" parent="." unique_id=1457238616 instance=ExtResource("13_3dc5f")]
 transform = Transform3D(0.10260605, 0, 0.2819078, 0, 0.3, 0, -0.2819078, 0, 0.10260605, -2.89865, -3.4557724, 3.7088318)
 
 [node name="Cube" parent="comp2/Sketchfab_model/Root" index="71"]
 transform = Transform3D(0.54901, 0, 0, 0, 0.52286094, 0.16741677, 0, -0.16741677, 0.52286094, 1.12211, 4.83986, 3.12501)
 
-[node name="Area3D" type="Area3D" parent="comp2"]
+[node name="Area3D" type="Area3D" parent="comp2" unique_id=1608188334]
 script = ExtResource("17_comp2_anim")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="comp2/Area3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="comp2/Area3D" unique_id=698517640]
 transform = Transform3D(1, 0, 2.9802322e-08, 0, 0.99999976, 0, -2.9802322e-08, 0, 1, -0.3421564, 3.5893893, -3.7903867)
 shape = SubResource("BoxShape3D_bp7nb")
 
-[node name="vent" parent="." instance=ExtResource("16_c2p1i")]
+[node name="vent" parent="." unique_id=1122074839 instance=ExtResource("16_c2p1i")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.58934, -3.5351, 0.0183032)
 script = ExtResource("16_env_anim")
 
 [node name="Cube_0" parent="vent/Sketchfab_model/Root/Cube" index="0"]
 blend_shapes/morph_0 = 0.80069
 
-[node name="candles" parent="." instance=ExtResource("15_c2p1i")]
-transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 8.718971, -3.9883974, -1.4040706)
-
-[node name="cage" parent="." instance=ExtResource("8_ilee1")]
-transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, 2.9052896, 1.0151119, -2.3068318)
-
-[node name="cage2" parent="." instance=ExtResource("8_ilee1")]
-transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, 4.6950107, -0.16983604, -2.3068318)
-
-[node name="cage3" parent="." instance=ExtResource("8_ilee1")]
-transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, -4.903317, -0.16983604, -2.3068318)
-
-[node name="cage4" parent="." instance=ExtResource("8_ilee1")]
-transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, -2.7719712, 1.6716766, -2.3068318)
-
-[node name="vent2" parent="." instance=ExtResource("16_c2p1i")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.959369, -0.40833986, 1.7391796)
+[node name="vent2" parent="vent" unique_id=1246735640 instance=ExtResource("16_c2p1i")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.548709, 3.12676, 1.7208765)
 script = ExtResource("16_env_anim")
 
-[node name="cables" parent="." instance=ExtResource("20_al0g7")]
+[node name="candles" parent="." unique_id=601691167 instance=ExtResource("15_c2p1i")]
+transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 8.718971, -3.9883974, -1.4040706)
+
+[node name="cage" parent="." unique_id=2069785194 instance=ExtResource("8_ilee1")]
+transform = Transform3D(0.06, 0, 0, 0, 0.06, 0, 0, 0, 0.06, 2.9052896, 1.0151119, -2.3068318)
+
+[node name="cage2" parent="cage" unique_id=1068748794 instance=ExtResource("8_ilee1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.828686, -19.749134, 0)
+
+[node name="cage3" parent="cage" unique_id=1128023441 instance=ExtResource("8_ilee1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -130.14345, -19.749134, 0)
+
+[node name="cage4" parent="cage" unique_id=295978959 instance=ExtResource("8_ilee1")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -94.62102, 10.942745, 0)
+
+[node name="cables" parent="." unique_id=1448712538 instance=ExtResource("20_al0g7")]
 transform = Transform3D(15, 0, 0, 0, 15, 0, 0, 0, 15, 6.530986, 4.0566244, 3.5697484)
 
-[node name="wall" parent="." instance=ExtResource("21_h415k")]
+[node name="wall" parent="." unique_id=1259142687 instance=ExtResource("21_h415k")]
 transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, -6.0639453, -4.0587797, -5.738714)
 
-[node name="wall2" parent="." instance=ExtResource("21_h415k")]
-transform = Transform3D(0.05, 0, 0, 0, 0.05, 0, 0, 0, 0.05, 3.6845107, -4.0587797, -5.738714)
+[node name="ground" parent="wall" unique_id=2028478180 instance=ExtResource("22_26mxa")]
+transform = Transform3D(0.19999999, 0, 0, 0, 0.19999999, 0, 0, 0, 0.19999999, 122.81743, -0.3784256, 99.820816)
 
-[node name="wall3" parent="." instance=ExtResource("21_h415k")]
-transform = Transform3D(-2.1855695e-09, 0, 0.05, 0, 0.05, 0, -0.05, 0, -2.1855695e-09, 9.672943, -4.0587797, -5.738714)
+[node name="wall4" parent="wall" unique_id=1903420820 instance=ExtResource("21_h415k")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 314.73776, 0, 198.82877)
 
-[node name="wall4" parent="." instance=ExtResource("21_h415k")]
-transform = Transform3D(-2.1855695e-09, 0, 0.05, 0, 0.05, 0, -0.05, 0, -2.1855695e-09, 9.672943, -4.0587797, 4.2027245)
+[node name="wall2" parent="wall" unique_id=567061266 instance=ExtResource("21_h415k")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 194.96912, 0, 0)
 
-[node name="Sketchfab_Scene" parent="." instance=ExtResource("22_26mxa")]
-transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0.07692623, -4.077701, -0.7476735)
+[node name="wall3" parent="wall" unique_id=223660350 instance=ExtResource("21_h415k")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 314.73776, 0, 0)
+
+[node name="head_camera" type="Camera3D" parent="." unique_id=669844845]
+transform = Transform3D(0.9614118, 0.08084031, -0.2629683, -0.17675054, 0.91398484, -0.36522737, 0.21082395, 0.39761367, 0.8930043, -0.74567485, -1.0291555, -1.9848208)
+visible = false
 
 [editable path="Taht"]
 [editable path="Sitting"]
 [editable path="CharacterBody3D/Camera3D/el_tam"]
+[editable path="CharacterBody3D/Camera3D/mice"]
 [editable path="comp"]
 [editable path="comp2"]
 [editable path="vent"]
-[editable path="CharacterBody3D/Camera3D/mice"]

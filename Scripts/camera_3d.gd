@@ -18,6 +18,8 @@ var shake_offset: Vector3 = Vector3.ZERO
 func _ready():
 	# Capture mouse (HIDE)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if OS.get_name() == "Linux":
+		Input.mouse_mode = Input.MOUSE_MODE_CONFINED
 	
 	# Find table and center view
 	var grid = get_tree().root.find_child("GridManager", true, false)

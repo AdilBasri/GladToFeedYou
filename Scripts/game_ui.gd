@@ -8,8 +8,12 @@ var perk_status_label: Label
 var info_label: Label
 var level_label: Label
 var current_level: int = 1
-
 var start_hint: Label
+var perk_tooltip: PanelContainer
+var perk_name: Label
+var perk_desc: Label
+var static_overlay: TextureRect
+var crosshair_node: Control
 
 func _ready():
 	# Create UI elements
@@ -32,8 +36,8 @@ func _input(event):
 		if overlay and not overlay.visible:
 			if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 				Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-				if start_hint:
-					start_hint.visible = false
+			if start_hint:
+				start_hint.visible = false
 
 func setup_ui():
 	# Add Crosshair
@@ -43,6 +47,7 @@ func setup_ui():
 	# Center it perfectly
 	# crosshair.position.y -= 40 
 	add_child(crosshair)
+	crosshair_node = crosshair
 	crosshair.modulate.a = 0
 	create_tween().tween_property(crosshair, "modulate:a", 1.0, 1.0)
 	
@@ -145,6 +150,23 @@ func setup_ui():
 	start_hint.add_theme_font_size_override("font_size", 40)
 	start_hint.add_theme_color_override("font_color", Color(1, 1, 0)) # Yellow
 	add_child(start_hint)
+
+	# Static/Glitch Overlay for Boss Transitions
+	static_overlay = TextureRect.new()
+	static_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	static_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	static_overlay.stretch_mode = TextureRect.STRETCH_SCALE
+	static_overlay.modulate.a = 0
+	static_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(static_overlay)
+	
+	var noise = FastNoiseLite.new()
+	noise.frequency = 0.2
+	var noise_tex = NoiseTexture2D.new()
+	noise_tex.noise = noise
+	static_overlay.texture = noise_tex
+	
+	setup_perk_tooltip()
 	
 	# Pulsing animation for start hint
 	var hint_tween = create_tween().set_loops()
@@ -268,3 +290,76 @@ func _on_restart_pressed():
 
 func _on_quit_pressed():
 	get_tree().quit()
+
+func setup_perk_tooltip():
+	perk_tooltip = PanelContainer.new()
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.8) # Dark, translucent
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.8, 0, 0) # Crimson border
+	style.set_corner_radius_all(4)
+	perk_tooltip.add_theme_stylebox_override("panel", style)
+	
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 15)
+	margin.add_theme_constant_override("margin_right", 15)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	perk_tooltip.add_child(margin)
+	
+	var vbox = VBoxContainer.new()
+	margin.add_child(vbox)
+	
+	perk_name = Label.new()
+	perk_name.add_theme_font_size_override("font_size", 28)
+	perk_name.add_theme_color_override("font_color", Color(1, 0.8, 0)) # Gold
+	vbox.add_child(perk_name)
+	
+	perk_desc = Label.new()
+	perk_desc.add_theme_font_size_override("font_size", 20)
+	perk_desc.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9)) # Off-white
+	vbox.add_child(perk_desc)
+	
+	add_child(perk_tooltip)
+	perk_tooltip.visible = false
+	
+	# Position: Horizontal center, slightly above the board
+	perk_tooltip.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
+	perk_tooltip.position.y -= 150 # Adjust height above the floor
+
+func set_crosshair_visible(v: bool):
+	if crosshair_node:
+		crosshair_node.visible = v
+
+func show_perk_tooltip(p_name: String, p_desc: String):
+	if not perk_tooltip: return
+	perk_name.text = p_name.to_upper()
+	perk_desc.text = p_desc
+	perk_tooltip.visible = true
+	perk_tooltip.modulate.a = 0
+	create_tween().tween_property(perk_tooltip, "modulate:a", 1.0, 0.2)
+
+func hide_perk_tooltip():
+	if not perk_tooltip: return
+	if perk_tooltip.visible:
+		var tween = create_tween()
+		tween.tween_property(perk_tooltip, "modulate:a", 0.0, 0.15)
+		await tween.finished
+		perk_tooltip.visible = false
+
+func show_static_fx(duration: float):
+	if not static_overlay: return
+	
+	static_overlay.visible = true
+	var tween = create_tween()
+	# Rapid flickering effect
+	for i in range(int(duration * 10)):
+		tween.tween_property(static_overlay, "modulate:a", randf_range(0.3, 0.7), 0.05)
+		tween.tween_property(static_overlay, "modulate", Color(randf(), randf(), randf(), randf_range(0.3, 0.7)), 0.05)
+	
+	tween.tween_property(static_overlay, "modulate:a", 0.0, 0.1)
+	await tween.finished
+	static_overlay.visible = false

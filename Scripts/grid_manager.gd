@@ -43,6 +43,7 @@ var hover_material: StandardMaterial3D
 var default_material: StandardMaterial3D
 var is_boss_turn: bool = false
 var game_over: bool = false
+var current_level: int = 1
 
 const WEIGHT_FIVE = 100000
 const WEIGHT_PLAYER_FOUR_OPEN = 15000
@@ -144,6 +145,9 @@ func _ready():
 		hover_indicator.material_override = ind_mat
 		hover_indicator.name = "HoverIndicator"
 		add_child(hover_indicator)
+		
+		# Initial progression setup
+		apply_progression_effects()
 
 
 func setup_boss_animation():
@@ -382,7 +386,7 @@ func perform_raycast(is_click: bool = false):
 	# All offsets removed to ensure perfect center-to-center alignment
 	
 	var from = camera.project_ray_origin(crosshair_pos)
-	var to = from + camera.project_ray_normal(crosshair_pos) * 100.0
+	var to = from + camera.project_ray_normal(crosshair_pos) * 200.0
 	var space_state = get_world_3d().direct_space_state
 	# Collision masks: 2 (Grid), 4 (Props), 8 (Boss)
 	var mask = 2 | 4 | 8 
@@ -392,27 +396,26 @@ func perform_raycast(is_click: bool = false):
 	if is_click and result:
 		var collider = result.collider
 		
-		# Propların masadaki halleri (Layer 4)
-		for type in player_item_nodes:
-			var body = player_item_nodes[type]
-			if body == collider:
-				if player_inventory.has(type):
-					var node = item_nodes[type]
-					var target_scale = 0.08 if type == "piston" else 0.15
-					if active_item == type:
-						active_item = "" # Deselect
-						node.scale = Vector3.ONE * target_scale
-						# Reset previous source scale if deselected
-						if mirror_source_coord != Vector2i(-1, -1):
-							var piece = board_visuals.get(mirror_source_coord)
-							if piece: piece.scale = Vector3.ONE
-						mirror_source_coord = Vector2i(-1, -1)
-					else:
-						active_item = type # Select
-						node.scale = Vector3.ONE * target_scale * 1.5 # Relative scale up
-						if ui_layer: ui_layer.show_info_message(type.to_upper() + " SELECTED" + ("! (BIND THE DEMON!)" if type == "rope" else ""))
-						play_sfx("use")
-					return
+		# Item identity selection using Metadata (Props Layer 4)
+		if collider.has_meta("type"):
+			var type = collider.get_meta("type")
+			if player_inventory.has(type):
+				var node = item_nodes[type]
+				var base_scale = 0.18 if type == "piston" else 0.25 # Consistent base scales
+				
+				if active_item == type:
+					active_item = "" # Deselect
+					node.scale = Vector3.ONE * base_scale
+					if mirror_source_coord != Vector2i(-1, -1):
+						var piece = board_visuals.get(mirror_source_coord)
+						if piece: piece.scale = Vector3.ONE
+					mirror_source_coord = Vector2i(-1, -1)
+				else:
+					active_item = type # Select
+					node.scale = Vector3.ONE * base_scale * 1.5 # Consistent relative scale up
+					if ui_layer: ui_layer.show_info_message(type.to_upper() + " SELECTED" + ("! (BIND THE DEMON!)" if type == "rope" else ""))
+					play_sfx("use")
+				return
 		
 		# Boss tıklama (Layer 8)
 		if active_item == "rope" and collider == boss_selection_body:
@@ -424,7 +427,27 @@ func perform_raycast(is_click: bool = false):
 	if is_click:
 		handle_click(result)
 
+var last_hovered: Vector2i = Vector2i(-1, -1)
+var last_hovered_prop: Node3D = null
+
 func handle_hover(result):
+	# Reset previous hovered prop if changed
+	var current_hovered_prop: Node3D = null
+	if result and result.collider.has_meta("type"):
+		# Find the parent item node
+		current_hovered_prop = result.collider.get_parent()
+		var type = result.collider.get_meta("type")
+		
+		if current_hovered_prop != last_hovered_prop:
+			if last_hovered_prop: _set_prop_hover_pulse(last_hovered_prop, "", false)
+			if current_hovered_prop: _set_prop_hover_pulse(current_hovered_prop, type, true)
+			last_hovered_prop = current_hovered_prop
+	else:
+		if last_hovered_prop:
+			_set_prop_hover_pulse(last_hovered_prop, "", false)
+			last_hovered_prop = null
+
+	# Existing grid hover logic
 	if result and result.collider.collision_layer == 2 and not is_boss_turn and not game_over:
 		var coords = get_coords_from_pos(result.position)
 		if is_valid_coord(coords):
@@ -450,7 +473,30 @@ func handle_hover(result):
 		if is_valid_coord(current_hover): set_cell_hover_state(current_hover, true)
 		last_hovered = current_hover
 
-var last_hovered: Vector2i = Vector2i(-1, -1)
+func _set_prop_hover_pulse(prop: Node3D, type: String, is_hover: bool):
+	var descriptions = {
+		"piston": ["Piston", "Crush an opponent's stone."],
+		"mirror": ["Mirror", "Swap a player and a daemon piece."],
+		"rope": ["Rope", "Bind the Daemon to skip its next turn."]
+	}
+	
+	if is_hover and descriptions.has(type):
+		if ui_layer and ui_layer.has_method("show_perk_tooltip"):
+			ui_layer.show_perk_tooltip(descriptions[type][0], descriptions[type][1])
+	else:
+		if ui_layer and ui_layer.has_method("hide_perk_tooltip"):
+			ui_layer.hide_perk_tooltip()
+	
+	var base_scale = 0.18 if type == "piston" else 0.25 # Normalized scales
+	if active_item == type: base_scale *= 1.5 
+	
+	var tween = create_tween().set_loops() if is_hover else create_tween()
+	if is_hover:
+		tween.tween_property(prop, "scale", Vector3.ONE * base_scale * 1.25, 0.4).set_trans(Tween.TRANS_SINE)
+		tween.tween_property(prop, "scale", Vector3.ONE * base_scale, 0.4).set_trans(Tween.TRANS_SINE)
+	else:
+		tween.stop()
+		create_tween().tween_property(prop, "scale", Vector3.ONE * base_scale, 0.2)
 
 func set_cell_hover_state(coords: Vector2i, is_hover: bool):
 	if not multimesh_instance: return
@@ -669,7 +715,9 @@ func place_object_on_surface(object_node: Node3D, contact_point: Vector3):
 	var local_bottom_center = Vector3(0, aabb.position.y, 0)
 	var global_bottom_center = mesh_node.to_global(local_bottom_center)
 	
-	var y_diff = (contact_point.y + 0.02) - global_bottom_center.y # Added 0.02 safe offset
+	# Lift perks and game pieces significantly to avoid table collision issues
+	var safety_lift = 0.35 # Adjusted for smaller items
+	var y_diff = (contact_point.y + safety_lift) - global_bottom_center.y 
 	object_node.global_position.y += y_diff
 	
 	# Horizontal alignment
@@ -766,7 +814,7 @@ func _animate_to_table(node, target_pos):
 	for k in item_nodes:
 		if item_nodes[k] == node: type = k
 	
-	var target_scale = 0.08 if type == "piston" else 0.15
+	var target_scale = 0.18 if type == "piston" else 0.25 # Normalized scales
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property(node, "global_position", target_pos, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	tween.tween_property(node, "scale", Vector3.ONE * target_scale, 1.2)
@@ -992,25 +1040,31 @@ func _evaluate_cell(c: Vector2i) -> float:
 	return score
 
 func _ensure_item_collision(item: Node3D, type: String):
+	# IDEMPOTENCY: Clear any existing selection body first to prevent identity overlap
+	var existing = item.find_child("SelectionBody", true, false)
+	if existing:
+		existing.name = "OldSelectionBody" # Avoid name conflicts during free
+		existing.queue_free()
+	
 	# Add a StaticBody3D wrapper so the FBX model is clickable
 	var static_body = StaticBody3D.new()
 	static_body.name = "SelectionBody"
 	static_body.collision_layer = 4 # Layer 3: Props
+	static_body.set_meta("type", type)
 	item.add_child(static_body)
 	
 	var col_shape = CollisionShape3D.new()
 	var box = BoxShape3D.new()
 	
-	# Use a static base size for the box relative to the prop scale
-	# Piston is small (0.08), so its click area should be about 0.5 in world units
-	# If parent is 0.08, then 6.0 in local units is 0.48 in world units.
-	var local_size = 8.0 if type == "piston" else 5.0
+	# Size 3.0 provides a clear 0.25 unit safety gap between items at 0.25 scale
+	var local_size = 3.0
 	box.size = Vector3.ONE * local_size
 	
 	col_shape.shape = box
 	static_body.add_child(col_shape)
 	
-	static_body.position = Vector3(0, local_size/2, 0) # Centered on mesh
+	# Offset to cover the entire mesh height, sitting slightly higher
+	static_body.position = Vector3(0, local_size / 2.0 * 0.9, 0) 
 	
 	# Force model nodes to ignore collision to avoid interference
 	_strip_collisions(item)
@@ -1113,6 +1167,20 @@ func restart_game():
 	turn_counter = 0
 	player_inventory.clear()
 	boss_inventory.clear()
+	
+	# Sync level from UI
+	if ui_layer and "current_level" in ui_layer:
+		current_level = ui_layer.current_level
+	
+	# Trigger head swap transition every 3 levels
+	if current_level % 3 == 0:
+		await _handle_head_transition()
+	else:
+		# Ensure correct head is shown even if no transition
+		_swap_boss_head()
+	
+	apply_progression_effects()
+	
 	active_item = ""
 	if active_rope_node:
 		active_rope_node.visible = false
@@ -1127,3 +1195,141 @@ func restart_game():
 	for child in get_children():
 		if child.name != "Table" and child.name != "GridMultiMesh" and child.name != "HoverIndicator" and child.name != "GridBase" and child.name != "GridCollision" and (child is Node3D or child is CPUParticles3D):
 			child.queue_free()
+
+func apply_progression_effects():
+	# 1. Music Pitch (Tempo) increases with level
+	if bg_music:
+		var pitch = 1.0 + (current_level - 1) * 0.04
+		bg_music.pitch_scale = clamp(pitch, 1.0, 1.4)
+	
+	# 2. Darken Boss character
+	var boss = get_parent().find_child("Sitting", true, false)
+	if boss:
+		var darken_factor = clamp(1.0 - (current_level - 1) * 0.12, 0.2, 1.0)
+		_apply_darkness_recursive(boss, darken_factor)
+	
+	# 3. Spawn Decorative Objects
+	if current_level >= 5:
+		_spawn_decor("res://Assets/skull.glb", Vector3(-2.8, 0.4, -1.0)) # Moved and lifted
+	if current_level >= 10:
+		_spawn_decor("res://Assets/black_rat__free_download/scene.gltf", Vector3(2.8, 0.3, -1.2))
+	
+	# 4. Status Messages for certain levels
+	if ui_layer and current_level > 1:
+		var messages = {
+			3: "THE DEMON GROWS IMPATIENT...",
+			5: "HIS HUNGER INTENSIFIES...",
+			7: "THE VOID IS CLOSING IN...",
+			10: "YOU ARE TEETERING ON THE BRINK..."
+		}
+		if messages.has(current_level):
+			ui_layer.show_info_message(messages[current_level], 4.0)
+
+func _apply_darkness_recursive(node: Node, factor: float):
+	if node is MeshInstance3D:
+		for i in range(node.get_surface_override_material_count()):
+			var mat = node.get_surface_override_material(i)
+			if not mat:
+				if node.mesh:
+					mat = node.mesh.surface_get_material(i)
+			
+			if mat:
+				var new_mat = mat.duplicate()
+				if new_mat is StandardMaterial3D:
+					new_mat.albedo_color *= factor
+					# Also dim emission if present
+					if new_mat.emission_enabled:
+						new_mat.emission_energy_multiplier *= factor
+				node.set_surface_override_material(i, new_mat)
+	
+	for child in node.get_children():
+		_apply_darkness_recursive(child, factor)
+
+func _spawn_decor(path: String, pos: Vector3):
+	var node_name = "Decor_" + path.get_file().get_basename()
+	if has_node(node_name): return
+	
+	if FileAccess.file_exists(path):
+		var scene = load(path)
+		if scene:
+			var inst = scene.instantiate()
+			inst.name = node_name
+			add_child(inst)
+			inst.position = pos
+			# Adaptive scaling (Significantly Increased)
+			if "skull" in path: inst.scale = Vector3.ONE * 0.8
+			else: inst.scale = Vector3.ONE * 1.5
+			
+			# Fade in scale
+			var tween = create_tween()
+			tween.tween_property(inst, "scale", inst.scale, 1.0).from(Vector3.ZERO)
+
+func _handle_head_transition():
+	var cam = get_viewport().get_camera_3d()
+	var head_cam = get_parent().find_child("head_camera", true, false)
+	if not cam: return
+	
+	# Force find head camera if standard search fails
+	if not head_cam:
+		head_cam = get_tree().root.find_child("head_camera", true, false)
+	
+	if not head_cam:
+		print("Warning: head_camera not found")
+		return
+	
+	# Lock camera/controls
+	if cam.has_method("set"): cam.set("is_locked", true)
+	
+	# HIDE Hand and Crosshair during transition
+	var hand = cam.find_child("el_tam", true, false)
+	var mice_model = cam.find_child("mice", true, false)
+	if hand: hand.visible = false
+	if mice_model: mice_model.visible = false
+	if ui_layer: ui_layer.set_crosshair_visible(false)
+
+	var original_transform = Transform3D(cam.global_transform)
+	var tween = create_tween()
+	
+	# 1. Tween to Boss Head (1.5s)
+	tween.tween_property(cam, "global_transform", head_cam.global_transform, 1.5).set_trans(Tween.TRANS_SINE)
+	await tween.finished
+	
+	# 2. Static FX & Swap (Center Point)
+	if ui_layer:
+		ui_layer.show_static_fx(1.0)
+	
+	await get_tree().create_timer(0.3).timeout # Slight delay before swap for impact
+	_swap_boss_head()
+	await get_tree().create_timer(0.7).timeout
+	
+	# 3. Tween back to Player (1.5s)
+	var tween_back = create_tween()
+	tween_back.tween_property(cam, "global_transform", original_transform, 1.5).set_trans(Tween.TRANS_SINE)
+	await tween_back.finished
+	
+	# RESTORE Hand and Crosshair
+	if hand: hand.visible = true
+	if mice_model: mice_model.visible = true
+	if ui_layer: ui_layer.set_crosshair_visible(true)
+	
+	# Unlock
+	if cam.has_method("set"): cam.set("is_locked", false)
+
+func _swap_boss_head():
+	var bone = get_parent().find_child("BoneAttachment3D", true, false)
+	if not bone: return
+	
+	# Sequence: chick, goat, dragon
+	var heads = ["chick", "goat", "dragon"]
+	var current_head_index = (current_level / 3) - 1
+	
+	# Default head (skull) for levels < 3
+	var default_head = bone.find_child("skull", true, false)
+	
+	for i in range(heads.size()):
+		var h_node = bone.find_child(heads[i], true, false)
+		if h_node:
+			h_node.visible = (i == current_head_index)
+	
+	if default_head:
+		default_head.visible = (current_head_index < 0)
